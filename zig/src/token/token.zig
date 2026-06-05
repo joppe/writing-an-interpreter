@@ -1,4 +1,5 @@
 const tokenType = @import("token_type.zig");
+const std = @import("std");
 
 pub const Token = union(tokenType.TokenType) {
     illegal: void,
@@ -23,9 +24,14 @@ pub const Token = union(tokenType.TokenType) {
     // keywords
     function: void,
     let: void,
-};
 
-pub fn lookup_ident(ident: []const u8) Token {
-    _ = ident;
-    return Token{ .ident = ident };
-}
+    pub fn fromIdent(ident: []const u8) Token {
+        if (std.mem.eql(u8, ident, "fn")) {
+            return Token{ .function = {} };
+        } else if (std.mem.eql(u8, ident, "let")) {
+            return Token{ .let = {} };
+        }
+
+        return Token{ .ident = ident };
+    }
+};

@@ -1,6 +1,7 @@
-const Token = @import("../token/token.zig");
-const tokenType = @import("../token/token_type.zig");
 const std = @import("std");
+
+const token = @import("../token/token.zig");
+const tokenType = @import("../token/token_type.zig");
 
 const EOF: u8 = 0;
 
@@ -23,41 +24,43 @@ pub const Lexer = struct {
         return lexer;
     }
 
-    pub fn next_token(self: *Lexer) Token.Token {
+    pub fn next_token(self: *Lexer) token.Token {
         self.skip_whitespace();
 
-        var token: Token.Token = undefined;
+        var nextToken: token.Token = undefined;
 
         if (self.ch == '=') {
-            token = Token.Token{ .assign = {} };
+            nextToken = token.Token{ .assign = {} };
         } else if (self.ch == ';') {
-            token = Token.Token{ .semicolon = {} };
+            nextToken = token.Token{ .semicolon = {} };
         } else if (self.ch == '(') {
-            token = Token.Token{ .lparen = {} };
+            nextToken = token.Token{ .lparen = {} };
         } else if (self.ch == ')') {
-            token = Token.Token{ .rparen = {} };
+            nextToken = token.Token{ .rparen = {} };
         } else if (self.ch == ',') {
-            token = Token.Token{ .comma = {} };
+            nextToken = token.Token{ .comma = {} };
         } else if (self.ch == '+') {
-            token = Token.Token{ .plus = {} };
+            nextToken = token.Token{ .plus = {} };
         } else if (self.ch == '{') {
-            token = Token.Token{ .lbrace = {} };
+            nextToken = token.Token{ .lbrace = {} };
         } else if (self.ch == '}') {
-            token = Token.Token{ .rbrace = {} };
+            nextToken = token.Token{ .rbrace = {} };
         } else if (self.ch == 0) {
-            token = Token.Token{ .eof = {} };
+            nextToken = token.Token{ .eof = {} };
         } else if (is_letter(self.ch)) {
             const literal = self.read_identifier();
-            return lookup_ident(literal);
+
+            return token.Token.fromIdent(literal);
         } else if (is_digit(self.ch)) {
-            return self.read_number();
+            const literal = self.read_number();
+            return token.Token{ .int = literal };
         } else {
-            token = Token.Token{ .illegal = {} };
+            nextToken = token.Token{ .illegal = {} };
         }
 
         self.read_char();
 
-        return token;
+        return nextToken;
     }
 
     fn read_identifier(self: *Lexer) []const u8 {
@@ -118,50 +121,51 @@ test "next_token" {
         \\let result = add(five, ten);
     ;
 
-    const expected = [_]Token.Token{
-        Token.Token{ .let = {} },
-        Token.Token{ .ident = "five" },
-        Token.Token{ .assign = {} },
-        Token.Token{ .int = "5" },
-        Token.Token{ .semicolon = {} },
-        Token.Token{ .let = {} },
-        Token.Token{ .ident = "ten" },
-        Token.Token{ .assign = {} },
-        Token.Token{ .int = "10" },
-        Token.Token{ .semicolon = {} },
-        Token.Token{ .let = {} },
-        Token.Token{ .ident = "add" },
-        Token.Token{ .assign = {} },
-        Token.Token{ .function = {} },
-        Token.Token{ .lparen = {} },
-        Token.Token{ .ident = "x" },
-        Token.Token{ .comma = {} },
-        Token.Token{ .ident = "y" },
-        Token.Token{ .rparen = {} },
-        Token.Token{ .lbrace = {} },
-        Token.Token{ .ident = "x" },
-        Token.Token{ .plus = {} },
-        Token.Token{ .ident = "y" },
-        Token.Token{ .semicolon = {} },
-        Token.Token{ .rbrace = {} },
-        Token.Token{ .semicolon = {} },
-        Token.Token{ .let = {} },
-        Token.Token{ .ident = "result" },
-        Token.Token{ .assign = {} },
-        Token.Token{ .ident = "add" },
-        Token.Token{ .lparen = {} },
-        Token.Token{ .ident = "five" },
-        Token.Token{ .comma = {} },
-        Token.Token{ .ident = "ten" },
-        Token.Token{ .rparen = {} },
-        Token.Token{ .semicolon = {} },
-        Token.Token{ .eof = {} },
+    const expected = [_]token.Token{
+        token.Token{ .let = {} },
+        token.Token{ .ident = "five" },
+        token.Token{ .assign = {} },
+        token.Token{ .int = "5" },
+        token.Token{ .semicolon = {} },
+        token.Token{ .let = {} },
+        token.Token{ .ident = "ten" },
+        token.Token{ .assign = {} },
+        token.Token{ .int = "10" },
+        token.Token{ .semicolon = {} },
+        token.Token{ .let = {} },
+        token.Token{ .ident = "add" },
+        token.Token{ .assign = {} },
+        token.Token{ .function = {} },
+        token.Token{ .lparen = {} },
+        token.Token{ .ident = "x" },
+        token.Token{ .comma = {} },
+        token.Token{ .ident = "y" },
+        token.Token{ .rparen = {} },
+        token.Token{ .lbrace = {} },
+        token.Token{ .ident = "x" },
+        token.Token{ .plus = {} },
+        token.Token{ .ident = "y" },
+        token.Token{ .semicolon = {} },
+        token.Token{ .rbrace = {} },
+        token.Token{ .semicolon = {} },
+        token.Token{ .let = {} },
+        token.Token{ .ident = "result" },
+        token.Token{ .assign = {} },
+        token.Token{ .ident = "add" },
+        token.Token{ .lparen = {} },
+        token.Token{ .ident = "five" },
+        token.Token{ .comma = {} },
+        token.Token{ .ident = "ten" },
+        token.Token{ .rparen = {} },
+        token.Token{ .semicolon = {} },
+        token.Token{ .eof = {} },
     };
 
     var lexer = Lexer.init(input);
 
     for (expected) |expected_token| {
-        const tok = lexer.next_token();
-        try std.testing.expectEqual(expected_token, tok);
+        const nextToken = lexer.next_token();
+
+        try std.testing.expectEqualDeep(expected_token, nextToken);
     }
 }
