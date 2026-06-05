@@ -1,4 +1,4 @@
-const tokenType = @import("token_type.zig")
+const tokenType = @import("token_type.zig");
 
 pub const Token = union(tokenType.TokenType) {
     illegal: void,
@@ -24,3 +24,8 @@ pub const Token = union(tokenType.TokenType) {
     function: void,
     let: void,
 };
+
+pub fn lookup_ident(ident: []const u8) Token {
+    _ = ident;
+    return Token{ .ident = ident };
+}
