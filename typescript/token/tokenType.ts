@@ -18,6 +18,19 @@ export const tokenType = {
   // Keywords
   FUNCTION: "FUNCTION",
   LET: "LET",
+} as const;
+
+export type TokenType = (typeof tokenType)[keyof typeof tokenType];
+
+const keywords: Record<string, TokenType> = {
+  "fn": tokenType.FUNCTION,
+  "let": tokenType.LET,
 };
 
-export type TokenType = typeof tokenType;
+export function lookupIdent(ident: string): TokenType {
+  if (ident in keywords) {
+    return keywords[ident];
+  }
+
+  return tokenType.IDENT;
+}
