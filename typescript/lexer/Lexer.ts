@@ -30,22 +30,60 @@ export class Lexer {
 
     switch (this._char) {
       case "=":
-        token = new Token(tokenType.ASSIGN, "=");
+        if (this.peekChar() === "=") {
+          const char = this._char;
+
+          this.readChar();
+
+          const literal = `${char}${this._char}`;
+
+          token = new Token(tokenType.EQ, literal);
+        } else {
+          token = new Token(tokenType.ASSIGN, "=");
+        }
+        break;
+      case "+":
+        token = new Token(tokenType.PLUS, "+");
+        break;
+      case "-":
+        token = new Token(tokenType.MINUS, "-");
+        break;
+      case "!":
+        if (this.peekChar() === "=") {
+          const char = this._char;
+
+          this.readChar();
+
+          const literal = `${char}${this._char}`;
+
+          token = new Token(tokenType.NOT_EQ, literal);
+        } else {
+          token = new Token(tokenType.BANG, "!");
+        }
+        break;
+      case "/":
+        token = new Token(tokenType.SLASH, "/");
+        break;
+      case "*":
+        token = new Token(tokenType.ASTERISK, "*");
+        break;
+      case "<":
+        token = new Token(tokenType.LT, "<");
+        break;
+      case ">":
+        token = new Token(tokenType.GT, ">");
         break;
       case ";":
         token = new Token(tokenType.SEMICOLON, ";");
+        break;
+      case ",":
+        token = new Token(tokenType.COMMA, ",");
         break;
       case "(":
         token = new Token(tokenType.LPAREN, "(");
         break;
       case ")":
         token = new Token(tokenType.RPAREN, ")");
-        break;
-      case ",":
-        token = new Token(tokenType.COMMA, ",");
-        break;
-      case "+":
-        token = new Token(tokenType.PLUS, "+");
         break;
       case "{":
         token = new Token(tokenType.LBRACE, "{");
@@ -73,6 +111,14 @@ export class Lexer {
     this.readChar();
 
     return token;
+  }
+
+  private peekChar(): string {
+    if (this._readPosition >= this._input.length) {
+      return EOF;
+    }
+
+    return this._input[this._readPosition];
   }
 
   private readIdentifier(): string {

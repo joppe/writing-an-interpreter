@@ -13,6 +13,18 @@ let add = fn(x, y) {
 };
 
 let result = add(five, ten);
+
+!-/*5;
+5 < 10 > 5;
+
+if (5 < 10) {
+  return true;
+} else {
+  return false;
+}
+
+10 == 10;
+10 != 9;
 `;
     const tests = [
       [tokenType.LET, "let"],
@@ -50,6 +62,43 @@ let result = add(five, ten);
       [tokenType.COMMA, ","],
       [tokenType.IDENT, "ten"],
       [tokenType.RPAREN, ")"],
+      [tokenType.SEMICOLON, ";"],
+      [tokenType.BANG, "!"],
+      [tokenType.MINUS, "-"],
+      [tokenType.SLASH, "/"],
+      [tokenType.ASTERISK, "*"],
+      [tokenType.INT, "5"],
+      [tokenType.SEMICOLON, ";"],
+      [tokenType.INT, "5"],
+      [tokenType.LT, "<"],
+      [tokenType.INT, "10"],
+      [tokenType.GT, ">"],
+      [tokenType.INT, "5"],
+      [tokenType.SEMICOLON, ";"],
+      [tokenType.IF, "if"],
+      [tokenType.LPAREN, "("],
+      [tokenType.INT, "5"],
+      [tokenType.LT, "<"],
+      [tokenType.INT, "10"],
+      [tokenType.RPAREN, ")"],
+      [tokenType.LBRACE, "{"],
+      [tokenType.RETURN, "return"],
+      [tokenType.TRUE, "true"],
+      [tokenType.SEMICOLON, ";"],
+      [tokenType.RBRACE, "}"],
+      [tokenType.ELSE, "else"],
+      [tokenType.LBRACE, "{"],
+      [tokenType.RETURN, "return"],
+      [tokenType.FALSE, "false"],
+      [tokenType.SEMICOLON, ";"],
+      [tokenType.RBRACE, "}"],
+      [tokenType.INT, "10"],
+      [tokenType.EQ, "=="],
+      [tokenType.INT, "10"],
+      [tokenType.SEMICOLON, ";"],
+      [tokenType.INT, "10"],
+      [tokenType.NOT_EQ, "!="],
+      [tokenType.INT, "9"],
       [tokenType.SEMICOLON, ";"],
       [tokenType.EOF, ""],
     ];
