@@ -1,24 +1,37 @@
 pub const TokenType = enum {
-    illegal,
-    eof,
+    ILLEGAL,
+    EOF,
 
     // identifiers + literals
-    ident,
-    int,
+    IDENT,
+    INT,
 
     // operators
-    assign,
-    plus,
+    ASSIGN,
+    PLUS,
+    MINUS,
+    BANG,
+    ASTERISK,
+    SLASH,
+    EQ,
+    NOT_EQ,
 
     // delimiters
-    comma,
-    semicolon,
-    lparen,
-    rparen,
-    lbrace,
-    rbrace,
+    COMMA,
+    SEMICOLON,
+    LPAREN,
+    RPAREN,
+    LBRACE,
+    RBRACE,
+    LT,
+    GT,
 
     // keywords
-    function,
-    let,
+    FUNCTION,
+    LET,
+    TRUE,
+    FALSE,
+    IF,
+    ELSE,
+    RETURN,
 };

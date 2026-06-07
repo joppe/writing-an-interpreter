@@ -30,37 +30,69 @@ pub const Lexer = struct {
         var nextToken: token.Token = undefined;
 
         if (self.ch == '=') {
-            nextToken = token.Token{ .assign = {} };
-        } else if (self.ch == ';') {
-            nextToken = token.Token{ .semicolon = {} };
-        } else if (self.ch == '(') {
-            nextToken = token.Token{ .lparen = {} };
-        } else if (self.ch == ')') {
-            nextToken = token.Token{ .rparen = {} };
-        } else if (self.ch == ',') {
-            nextToken = token.Token{ .comma = {} };
+            if (self.peek_char() == '=') {
+                self.read_char();
+
+                nextToken = token.Token{ .EQ = {} };
+            } else {
+                nextToken = token.Token{ .ASSIGN = {} };
+            }
         } else if (self.ch == '+') {
-            nextToken = token.Token{ .plus = {} };
+            nextToken = token.Token{ .PLUS = {} };
+        } else if (self.ch == '-') {
+            nextToken = token.Token{ .MINUS = {} };
+        } else if (self.ch == '!') {
+            if (self.peek_char() == '=') {
+                self.read_char();
+
+                nextToken = token.Token{ .NOT_EQ = {} };
+            } else {
+                nextToken = token.Token{ .BANG = {} };
+            }
+        } else if (self.ch == '/') {
+            nextToken = token.Token{ .SLASH = {} };
+        } else if (self.ch == '*') {
+            nextToken = token.Token{ .ASTERISK = {} };
+        } else if (self.ch == ';') {
+            nextToken = token.Token{ .SEMICOLON = {} };
+        } else if (self.ch == ',') {
+            nextToken = token.Token{ .COMMA = {} };
+        } else if (self.ch == '<') {
+            nextToken = token.Token{ .LT = {} };
+        } else if (self.ch == '>') {
+            nextToken = token.Token{ .GT = {} };
+        } else if (self.ch == '(') {
+            nextToken = token.Token{ .LPAREN = {} };
+        } else if (self.ch == ')') {
+            nextToken = token.Token{ .RPAREN = {} };
         } else if (self.ch == '{') {
-            nextToken = token.Token{ .lbrace = {} };
+            nextToken = token.Token{ .LBRACE = {} };
         } else if (self.ch == '}') {
-            nextToken = token.Token{ .rbrace = {} };
+            nextToken = token.Token{ .RBRACE = {} };
         } else if (self.ch == 0) {
-            nextToken = token.Token{ .eof = {} };
+            nextToken = token.Token{ .EOF = {} };
         } else if (is_letter(self.ch)) {
             const literal = self.read_identifier();
 
             return token.Token.fromIdent(literal);
         } else if (is_digit(self.ch)) {
             const literal = self.read_number();
-            return token.Token{ .int = literal };
+            return token.Token{ .INT = literal };
         } else {
-            nextToken = token.Token{ .illegal = {} };
+            nextToken = token.Token{ .ILLEGAL = {} };
         }
 
         self.read_char();
 
         return nextToken;
+    }
+
+    fn peek_char(self: Lexer) u8 {
+        if (self.read_position >= self.input.len) {
+            return EOF;
+        }
+
+        return self.input[self.read_position];
     }
 
     fn read_identifier(self: *Lexer) []const u8 {
@@ -119,46 +151,93 @@ test "next_token" {
         \\};
         \\
         \\let result = add(five, ten);
+        \\!-/*5;
+        \\5 < 10 > 5;
+        \\
+        \\if (5 < 10) {
+        \\return true;
+        \\} else {
+        \\return false;
+        \\}
+        \\10 == 10;
+        \\10 != 9;
     ;
 
     const expected = [_]token.Token{
-        token.Token{ .let = {} },
-        token.Token{ .ident = "five" },
-        token.Token{ .assign = {} },
-        token.Token{ .int = "5" },
-        token.Token{ .semicolon = {} },
-        token.Token{ .let = {} },
-        token.Token{ .ident = "ten" },
-        token.Token{ .assign = {} },
-        token.Token{ .int = "10" },
-        token.Token{ .semicolon = {} },
-        token.Token{ .let = {} },
-        token.Token{ .ident = "add" },
-        token.Token{ .assign = {} },
-        token.Token{ .function = {} },
-        token.Token{ .lparen = {} },
-        token.Token{ .ident = "x" },
-        token.Token{ .comma = {} },
-        token.Token{ .ident = "y" },
-        token.Token{ .rparen = {} },
-        token.Token{ .lbrace = {} },
-        token.Token{ .ident = "x" },
-        token.Token{ .plus = {} },
-        token.Token{ .ident = "y" },
-        token.Token{ .semicolon = {} },
-        token.Token{ .rbrace = {} },
-        token.Token{ .semicolon = {} },
-        token.Token{ .let = {} },
-        token.Token{ .ident = "result" },
-        token.Token{ .assign = {} },
-        token.Token{ .ident = "add" },
-        token.Token{ .lparen = {} },
-        token.Token{ .ident = "five" },
-        token.Token{ .comma = {} },
-        token.Token{ .ident = "ten" },
-        token.Token{ .rparen = {} },
-        token.Token{ .semicolon = {} },
-        token.Token{ .eof = {} },
+        token.Token{ .LET = {} },
+        token.Token{ .IDENT = "five" },
+        token.Token{ .ASSIGN = {} },
+        token.Token{ .INT = "5" },
+        token.Token{ .SEMICOLON = {} },
+        token.Token{ .LET = {} },
+        token.Token{ .IDENT = "ten" },
+        token.Token{ .ASSIGN = {} },
+        token.Token{ .INT = "10" },
+        token.Token{ .SEMICOLON = {} },
+        token.Token{ .LET = {} },
+        token.Token{ .IDENT = "add" },
+        token.Token{ .ASSIGN = {} },
+        token.Token{ .FUNCTION = {} },
+        token.Token{ .LPAREN = {} },
+        token.Token{ .IDENT = "x" },
+        token.Token{ .COMMA = {} },
+        token.Token{ .IDENT = "y" },
+        token.Token{ .RPAREN = {} },
+        token.Token{ .LBRACE = {} },
+        token.Token{ .IDENT = "x" },
+        token.Token{ .PLUS = {} },
+        token.Token{ .IDENT = "y" },
+        token.Token{ .SEMICOLON = {} },
+        token.Token{ .RBRACE = {} },
+        token.Token{ .SEMICOLON = {} },
+        token.Token{ .LET = {} },
+        token.Token{ .IDENT = "result" },
+        token.Token{ .ASSIGN = {} },
+        token.Token{ .IDENT = "add" },
+        token.Token{ .LPAREN = {} },
+        token.Token{ .IDENT = "five" },
+        token.Token{ .COMMA = {} },
+        token.Token{ .IDENT = "ten" },
+        token.Token{ .RPAREN = {} },
+        token.Token{ .SEMICOLON = {} },
+        token.Token{ .BANG = {} },
+        token.Token{ .MINUS = {} },
+        token.Token{ .SLASH = {} },
+        token.Token{ .ASTERISK = {} },
+        token.Token{ .INT = "5" },
+        token.Token{ .SEMICOLON = {} },
+        token.Token{ .INT = "5" },
+        token.Token{ .LT = {} },
+        token.Token{ .INT = "10" },
+        token.Token{ .GT = {} },
+        token.Token{ .INT = "5" },
+        token.Token{ .SEMICOLON = {} },
+        token.Token{ .IF = {} },
+        token.Token{ .LPAREN = {} },
+        token.Token{ .INT = "5" },
+        token.Token{ .LT = {} },
+        token.Token{ .INT = "10" },
+        token.Token{ .RPAREN = {} },
+        token.Token{ .LBRACE = {} },
+        token.Token{ .RETURN = {} },
+        token.Token{ .TRUE = {} },
+        token.Token{ .SEMICOLON = {} },
+        token.Token{ .RBRACE = {} },
+        token.Token{ .ELSE = {} },
+        token.Token{ .LBRACE = {} },
+        token.Token{ .RETURN = {} },
+        token.Token{ .FALSE = {} },
+        token.Token{ .SEMICOLON = {} },
+        token.Token{ .RBRACE = {} },
+        token.Token{ .INT = "10" },
+        token.Token{ .EQ = {} },
+        token.Token{ .INT = "10" },
+        token.Token{ .SEMICOLON = {} },
+        token.Token{ .INT = "10" },
+        token.Token{ .NOT_EQ = {} },
+        token.Token{ .INT = "9" },
+        token.Token{ .SEMICOLON = {} },
+        token.Token{ .EOF = {} },
     };
 
     var lexer = Lexer.init(input);
