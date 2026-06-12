@@ -1,26 +1,46 @@
+import {
+  EOF,
+  isDigit,
+  isLetter,
+  isWhitespace,
+  NEW_LINE,
+} from "../char/index.ts";
 import { Token, tokenType } from "../token/index.ts";
 import { lookupIdent } from "../token/tokenType.ts";
-
-const EOF = "\u0000";
+import { Position } from "./Position.ts";
 
 export class Lexer {
   private readonly _input: string;
+  private _line: number;
+  private _column: number;
 
   /**
    * point to the position of char
    */
-  private _position: number = 0;
+  private _position: number;
 
   /**
    * point to the next char
    */
-  private _readPosition: number = 0;
+  private _readPosition;
   private _char = EOF;
 
   constructor(input: string) {
     this._input = input;
+    this._readPosition = 0;
+    this._position = 0;
+    this._line = 1;
+    this._column = 1;
 
     this.readChar();
+  }
+
+  public getCurrentPosition(): Position {
+    return {
+      line: this._line,
+      column: this._column,
+      offset: this._position,
+    };
   }
 
   public nextToken(): Token {
@@ -95,12 +115,12 @@ export class Lexer {
         token = new Token(tokenType.EOF, "");
         break;
       default:
-        if (this.isLetter(this._char)) {
+        if (isLetter(this._char)) {
           const literal = this.readIdentifier();
           const type = lookupIdent(literal);
 
           return new Token(type, literal);
-        } else if (this.isDigit(this._char)) {
+        } else if (isDigit(this._char)) {
           return new Token(tokenType.INT, this.readNumber());
         } else {
           token = new Token(tokenType.ILLEGAL, this._char);
@@ -124,7 +144,7 @@ export class Lexer {
   private readIdentifier(): string {
     const postion = this._position;
 
-    while (this.isLetter(this._char)) {
+    while (isLetter(this._char)) {
       this.readChar();
     }
 
@@ -134,23 +154,17 @@ export class Lexer {
   private readNumber(): string {
     const position = this._position;
 
-    while (this.isDigit(this._char)) {
+    while (isDigit(this._char)) {
       this.readChar();
     }
 
     return this._input.slice(position, this._position);
   }
 
-  private isDigit(char: string): boolean {
-    return (char >= "0" && this._char <= "9");
-  }
-  private isLetter(char: string): boolean {
-    return (char >= "a" && char <= "z") || (char >= "A" && char <= "Z") ||
-      char === "_";
-  }
-
   private skipWhitespace() {
-    while (this._char === " " || this._char === "\t" || this._char === "\n") {
+    while (
+      isWhitespace(this._char)
+    ) {
       this.readChar();
     }
   }
@@ -164,5 +178,12 @@ export class Lexer {
 
     this._position = this._readPosition;
     this._readPosition += 1;
+
+    if (this._char === NEW_LINE) {
+      this._line += 1;
+      this._column = 1;
+    } else {
+      this._column += 1;
+    }
   }
 }

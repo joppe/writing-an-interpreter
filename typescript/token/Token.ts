@@ -16,4 +16,8 @@ export class Token {
     this._type = type;
     this._literal = literal;
   }
+
+  public toString(): string {
+    return this._literal;
+  }
 }
