@@ -5,7 +5,7 @@ export const tokenType = {
   IDENT: "IDENT", // add, foobar, x, y, ...
   INT: "INT", // 1343456
   // Operators
-  ASSIGN: ":",
+  ASSIGN: "=",
   PLUS: "+",
   MINUS: "-",
   BANG: "!",
@@ -15,7 +15,7 @@ export const tokenType = {
   NOT_EQ: "!=",
   // Delimiters
   COMMA: ",",
-  SEMICOLON: ",",
+  SEMICOLON: ";",
   LPAREN: "(",
   RPAREN: ")",
   LBRACE: "{",

@@ -18,6 +18,6 @@ export class Token {
   }
 
   public toString(): string {
-    return this._literal;
+    return `{type: ${this.type}, literal: ${this.literal}}`;
   }
 }
