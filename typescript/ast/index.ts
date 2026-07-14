@@ -3,4 +3,5 @@ export { Identifier } from "./Identifier.ts";
 export { LetStatement } from "./LetStatement.ts";
 export { type Node } from "./Node.ts";
 export { Program } from "./Program.ts";
+export { ReturnStatement } from "./ReturnStatement.ts";
 export { type Statement } from "./Statement.ts";
