@@ -18,4 +18,14 @@ export class Program implements Statement {
 
     return "";
   }
+
+  public toString(): string {
+    let out = "";
+
+    for (const statement of this._statements) {
+      out += statement.toString();
+    }
+
+    return out;
+  }
 }

@@ -1,15 +1,15 @@
 import { Token } from "../token/index.ts";
 import { type Expression } from "./Expression.ts";
 
-export class Identifier implements Expression {
+export class IntegerLiteral implements Expression {
   private readonly _token: Token;
-  private readonly _value: string;
+  private readonly _value: number;
 
-  get value(): string {
+  get value(): number {
     return this._value;
   }
 
-  public constructor(token: Token, value: string) {
+  public constructor(token: Token, value: number) {
     this._token = token;
     this._value = value;
   }
@@ -19,6 +19,6 @@ export class Identifier implements Expression {
   }
 
   public toString(): string {
-    return this._value;
+    return String(this._value);
   }
 }

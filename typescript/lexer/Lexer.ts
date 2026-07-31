@@ -15,7 +15,7 @@ export class Lexer {
   private _column: number;
 
   /**
-   * point to the position of char
+   * point to the position of the current char
    */
   private _position: number;
 
