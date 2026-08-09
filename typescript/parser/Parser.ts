@@ -3,6 +3,7 @@ import {
   Bool,
   Expression,
   ExpressionStatement,
+  FunctionLiteral,
   Identifier,
   IfExpression,
   InfixExpression,
@@ -51,6 +52,10 @@ export class Parser {
       this.parseGroupedExpression.bind(this),
     );
     this.registerPrefix(tokenType.IF, this.parseIfExpression.bind(this));
+    this.registerPrefix(
+      tokenType.FUNCTION,
+      this.parseFunctionLiteral.bind(this),
+    );
 
     this.registerInfix(tokenType.PLUS, this.parseInfixExpression.bind(this));
     this.registerInfix(tokenType.MINUS, this.parseInfixExpression.bind(this));
@@ -145,6 +150,55 @@ export class Parser {
     }
 
     return new BlockStatement(token, statements);
+  }
+
+  private parseFunctionLiteral(): FunctionLiteral | null {
+    const token = this._currentToken;
+
+    if (!this.expectPeek(tokenType.LPAREN)) {
+      return null;
+    }
+
+    const parameters = this.parseFunctionParameters();
+
+    if (!this.expectPeek(tokenType.LBRACE)) {
+      return null;
+    }
+
+    const body = this.parseBlockStatement();
+
+    return new FunctionLiteral(token, parameters, body);
+  }
+
+  private parseFunctionParameters(): Identifier[] {
+    const identifiers: Identifier[] = [];
+
+    if (this.peekTokenIs(tokenType.RPAREN)) {
+      this.nextToken();
+
+      return identifiers;
+    }
+
+    this.nextToken();
+
+    identifiers.push(
+      new Identifier(this._currentToken, this._currentToken.literal),
+    );
+
+    while (this.peekTokenIs(tokenType.COMMA)) {
+      this.nextToken();
+      this.nextToken();
+
+      identifiers.push(
+        new Identifier(this._currentToken, this._currentToken.literal),
+      );
+    }
+
+    if (!this.expectPeek(tokenType.RPAREN)) {
+      return [];
+    }
+
+    return identifiers;
   }
 
   private parseIfExpression(): IfExpression | null {

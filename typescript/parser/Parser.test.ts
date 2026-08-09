@@ -6,6 +6,7 @@ import {
   BlockStatement,
   Bool,
   ExpressionStatement,
+  FunctionLiteral,
   Identifier,
   IfExpression,
   InfixExpression,
@@ -16,6 +17,77 @@ import {
 } from "../ast/index.ts";
 
 Deno.test("Parser", async (t) => {
+  await t.step("Function Parameter Parsing", () => {
+    const tests = [
+      ["fn() {};", []],
+      ["fn(x) {};", ["x"]],
+      ["fn(x, y, z) {};", ["x", "y", "z"]],
+    ] as const;
+
+    for (const test of tests) {
+      const lexer = new Lexer(test[0]);
+      const parser = new Parser(lexer);
+      const program = parser.parseProgram();
+
+      assertExists(program);
+      assertEquals(program.statements.length, 1, parser.errors.join("\n"));
+
+      const statement = program.statements[0];
+
+      assertInstanceOf(statement, ExpressionStatement);
+
+      const expression = statement.expression;
+
+      assertInstanceOf(expression, FunctionLiteral);
+
+      const params = expression.parameters;
+
+      assertEquals(params.length, test[1].length);
+
+      for (let i = 0; i < params.length; i += 1) {
+        assertEquals(params[i].value, test[1][i]);
+      }
+    }
+  });
+
+  await t.step("Function Literal", () => {
+    const input = "fn(x, y) { x + y; }";
+    const lexer = new Lexer(input);
+    const parser = new Parser(lexer);
+    const program = parser.parseProgram();
+
+    assertExists(program);
+    assertEquals(program.statements.length, 1, parser.errors.join("\n"));
+
+    const statement = program.statements[0];
+
+    assertInstanceOf(statement, ExpressionStatement);
+
+    const expression = statement.expression;
+
+    assertInstanceOf(expression, FunctionLiteral);
+
+    const params = expression.parameters;
+
+    assertEquals(params.length, 2);
+    assertInstanceOf(params[0], Identifier);
+    assertEquals(params[0].value, "x");
+    assertInstanceOf(params[1], Identifier);
+    assertEquals(params[1].value, "y");
+
+    assertEquals(expression.body.statements.length, 1);
+
+    const body = expression.body.statements[0];
+
+    assertInstanceOf(body, ExpressionStatement);
+    assertInstanceOf(body.expression, InfixExpression);
+    assertInstanceOf(body.expression.left, Identifier);
+    assertEquals(body.expression.left.value, "x");
+    assertEquals(body.expression.operator.toString(), "+");
+    assertInstanceOf(body.expression.right, Identifier);
+    assertEquals(body.expression.right.value, "y");
+  });
+
   await t.step("Test Expression", () => {
     const tests = [
       ["if (x < y) { x }", ["x", "<", "y"], "x", null],
