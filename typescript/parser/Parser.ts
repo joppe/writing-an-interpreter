@@ -1,8 +1,10 @@
 import {
+  BlockStatement,
   Bool,
   Expression,
   ExpressionStatement,
   Identifier,
+  IfExpression,
   InfixExpression,
   IntegerLiteral,
   LetStatement,
@@ -48,6 +50,7 @@ export class Parser {
       tokenType.LPAREN,
       this.parseGroupedExpression.bind(this),
     );
+    this.registerPrefix(tokenType.IF, this.parseIfExpression.bind(this));
 
     this.registerInfix(tokenType.PLUS, this.parseInfixExpression.bind(this));
     this.registerInfix(tokenType.MINUS, this.parseInfixExpression.bind(this));
@@ -120,6 +123,67 @@ export class Parser {
     }
 
     return new PrefixExpression(token, operator, right);
+  }
+
+  private parseBlockStatement(): BlockStatement {
+    const token = this._currentToken;
+    const statements: Statement[] = [];
+
+    this.nextToken();
+
+    while (
+      !this.currentTokenIs(tokenType.RBRACE) &&
+      !this.currentTokenIs(tokenType.EOF)
+    ) {
+      const statement = this.parseStatement();
+
+      if (statement !== null) {
+        statements.push(statement);
+      }
+
+      this.nextToken();
+    }
+
+    return new BlockStatement(token, statements);
+  }
+
+  private parseIfExpression(): IfExpression | null {
+    const token = this._currentToken;
+
+    if (!this.expectPeek(tokenType.LPAREN)) {
+      return null;
+    }
+
+    this.nextToken();
+
+    const condition = this.parseExpression(PRECEDENCE.LOWEST);
+
+    if (condition === null) {
+      return null;
+    }
+
+    if (!this.expectPeek(tokenType.RPAREN)) {
+      return null;
+    }
+
+    if (!this.expectPeek(tokenType.LBRACE)) {
+      return null;
+    }
+
+    const consequence = this.parseBlockStatement();
+    let alternative: BlockStatement | null = null;
+
+    if (this.peekTokenIs(tokenType.ELSE)) {
+      this.nextToken();
+
+      if (!this.expectPeek(tokenType.LBRACE)) {
+        return null;
+      }
+
+      alternative = this.parseBlockStatement();
+    }
+
+    return new IfExpression(token, condition, consequence, alternative);
   }
 
   private parseGroupedExpression(): Expression | null {

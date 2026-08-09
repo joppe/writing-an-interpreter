@@ -3,9 +3,11 @@ import { assertEquals, assertExists, assertInstanceOf } from "@std/assert";
 import { Lexer } from "../lexer/index.ts";
 import { Parser } from "./Parser.ts";
 import {
+  BlockStatement,
   Bool,
   ExpressionStatement,
   Identifier,
+  IfExpression,
   InfixExpression,
   IntegerLiteral,
   LetStatement,
@@ -14,6 +16,56 @@ import {
 } from "../ast/index.ts";
 
 Deno.test("Parser", async (t) => {
+  await t.step("Test Expression", () => {
+    const tests = [
+      ["if (x < y) { x }", ["x", "<", "y"], "x", null],
+      ["if (x < y) { x } else { y }", ["x", "<", "y"], "x", "y"],
+    ] as const;
+
+    for (const test of tests) {
+      const lexer = new Lexer(test[0]);
+      const parser = new Parser(lexer);
+      const program = parser.parseProgram();
+
+      assertExists(program);
+      assertEquals(program.statements.length, 1, parser.errors.join("\n"));
+
+      const statement = program.statements[0];
+
+      assertInstanceOf(statement, ExpressionStatement);
+
+      const expression = statement.expression;
+
+      assertInstanceOf(expression, IfExpression);
+
+      const condition = expression.condition;
+
+      assertInstanceOf(condition, InfixExpression);
+      assertEquals(condition.left.toString(), test[1][0]);
+      assertEquals(condition.operator.toString(), test[1][1]);
+      assertEquals(condition.right.toString(), test[1][2]);
+
+      const consequence = expression.consequence;
+
+      assertInstanceOf(consequence, BlockStatement);
+      assertEquals(consequence.statements.length, 1);
+      assertInstanceOf(consequence.statements[0], ExpressionStatement);
+      assertInstanceOf(consequence.statements[0].expression, Identifier);
+      assertEquals(consequence.statements[0].expression.value, test[2]);
+
+      const alternative = expression.alternative;
+
+      if (test[3] === null) {
+        assertEquals(alternative, null);
+      } else {
+        assertInstanceOf(alternative, BlockStatement);
+        assertInstanceOf(alternative.statements[0], ExpressionStatement);
+        assertInstanceOf(alternative.statements[0].expression, Identifier);
+        assertEquals(alternative.statements[0].expression.value, test[3]);
+      }
+    }
+  });
+
   await t.step("Bool Expression", () => {
     const input = "true;";
     const lexer = new Lexer(input);
