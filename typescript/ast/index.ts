@@ -1,3 +1,4 @@
+export { Bool } from "./Bool.ts";
 export { type Expression } from "./Expression.ts";
 export { ExpressionStatement } from "./ExpressionStatement.ts";
 export { Identifier } from "./Identifier.ts";

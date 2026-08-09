@@ -1,4 +1,5 @@
 import {
+  Bool,
   Expression,
   ExpressionStatement,
   Identifier,
@@ -41,6 +42,8 @@ export class Parser {
     this.registerPrefix(tokenType.INT, this.parseIntegerLiteral.bind(this));
     this.registerPrefix(tokenType.BANG, this.parsePrefixExpression.bind(this));
     this.registerPrefix(tokenType.MINUS, this.parsePrefixExpression.bind(this));
+    this.registerPrefix(tokenType.TRUE, this.parseBool.bind(this));
+    this.registerPrefix(tokenType.FALSE, this.parseBool.bind(this));
 
     this.registerInfix(tokenType.PLUS, this.parseInfixExpression.bind(this));
     this.registerInfix(tokenType.MINUS, this.parseInfixExpression.bind(this));
@@ -113,6 +116,13 @@ export class Parser {
     }
 
     return new PrefixExpression(token, operator, right);
+  }
+
+  private parseBool(): Bool | null {
+    const literal = this._currentToken;
+    const value = this.currentTokenIs(tokenType.TRUE);
+
+    return new Bool(literal, value);
   }
 
   private parseIntegerLiteral(): IntegerLiteral | null {
