@@ -1,5 +1,6 @@
 import { EOF } from "../char/index.ts";
 import { IterableLexer, Lexer } from "../lexer/index.ts";
+import { Parser } from "../parser/index.ts";
 
 const PROMPT = ">> ";
 
@@ -29,10 +30,16 @@ export async function repl(): Promise<void> {
       break;
     }
 
-    const lexer = new IterableLexer(new Lexer(line));
+    const lexer = new Lexer(line);
+    const parser = new Parser(lexer);
+    const program = parser.parseProgram();
 
-    for (const token of lexer) {
-      await Deno.stdout.write(encoder.encode(`${token}\n`));
+    if (parser.errors.length > 0) {
+      for (const error of parser.errors) {
+        await Deno.stdout.write(encoder.encode(`${error}\n`));
+      }
     }
+
+    await Deno.stdout.write(encoder.encode(`${program.toString()}\n`));
   }
 }
