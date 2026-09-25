@@ -5,6 +5,7 @@ import { Parser } from "./Parser.ts";
 import {
   BlockStatement,
   Bool,
+  CallExpression,
   ExpressionStatement,
   FunctionLiteral,
   Identifier,
@@ -17,6 +18,31 @@ import {
 } from "../ast/index.ts";
 
 Deno.test("Parser", async (t) => {
+  await t.step("Call Expression Parsing", () => {
+    const input = "add(1, 2 * 3, 4 + 5);";
+    const lexer = new Lexer(input);
+    const parser = new Parser(lexer);
+    const program = parser.parseProgram();
+
+    assertExists(program);
+    assertEquals(program.statements.length, 1, parser.errors.join("\n"));
+
+    const statement = program.statements[0];
+
+    assertInstanceOf(statement, ExpressionStatement);
+
+    const expression = statement.expression;
+
+    assertInstanceOf(expression, CallExpression);
+
+    const args = expression.args;
+
+    assertEquals(args.length, 3);
+    assertInstanceOf(args[0], IntegerLiteral);
+    assertInstanceOf(args[1], InfixExpression);
+    assertInstanceOf(args[2], InfixExpression);
+  });
+
   await t.step("Function Parameter Parsing", () => {
     const tests = [
       ["fn() {};", []],
@@ -244,6 +270,18 @@ Deno.test("Parser", async (t) => {
         "!(true == true)",
         "(!(true == true))",
       ],
+      [
+        "a + add(b * c) + d",
+        "((a + add((b * c))) + d)",
+      ],
+      [
+        "add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))",
+        "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))",
+      ],
+      [
+        "add(a + b + c * d / f + g)",
+        "add((((a + b) + ((c * d) / f)) + g))",
+      ],
     ] as const;
 
     for (const test of tests) {
@@ -405,26 +443,26 @@ return 993322;
   });
 
   await t.step("Let Statements", () => {
-    const input = `let x = 5;
-let y = 10;
-let foobar = 838383;
-`;
-    const lexer = new Lexer(input);
-    const parser = new Parser(lexer);
-    const program = parser.parseProgram();
+    const tests = [
+      ["let x = 5;", "x", 5],
+      ["let y = true;", "y", true],
+      ["let foobar = y;", "foobar", "y"],
+    ] as const;
 
-    assertExists(program);
-    assertEquals(program.statements.length, 3, parser.errors.join("\n"));
+    for (const test of tests) {
+      const lexer = new Lexer(test[0]);
+      const parser = new Parser(lexer);
+      const program = parser.parseProgram();
 
-    const names = ["x", "y", "foobar"];
+      assertExists(program);
+      assertEquals(program.statements.length, 1, parser.errors.join("\n"));
 
-    names.forEach((name, index) => {
-      const statement = program.statements[index];
+      const statement = program.statements[0];
 
-      assertEquals(statement.tokenLiteral(), "let");
       assertInstanceOf(statement, LetStatement);
-      assertEquals(statement.name.value, name);
-      assertEquals(statement.name.tokenLiteral(), name);
-    });
+
+      assertEquals(statement.name.toString(), test[1]);
+      assertEquals(statement.value?.toString(), String(test[2]));
+    }
   });
 });

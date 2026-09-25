@@ -21,4 +21,5 @@ export const precedences = new Map<TokenType, Precedence>([
   [tokenType.MINUS, PRECEDENCE.SUM],
   [tokenType.SLASH, PRECEDENCE.PRODUCT],
   [tokenType.ASTERISK, PRECEDENCE.PRODUCT],
+  [tokenType.LPAREN, PRECEDENCE.CALL],
 ]);

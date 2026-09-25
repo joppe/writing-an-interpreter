@@ -1,6 +1,7 @@
 import {
   BlockStatement,
   Bool,
+  CallExpression,
   Expression,
   ExpressionStatement,
   FunctionLiteral,
@@ -68,6 +69,7 @@ export class Parser {
     this.registerInfix(tokenType.NOT_EQ, this.parseInfixExpression.bind(this));
     this.registerInfix(tokenType.LT, this.parseInfixExpression.bind(this));
     this.registerInfix(tokenType.GT, this.parseInfixExpression.bind(this));
+    this.registerInfix(tokenType.LPAREN, this.parseCallExpression.bind(this));
   }
 
   public parseProgram(): Program {
@@ -128,6 +130,52 @@ export class Parser {
     }
 
     return new PrefixExpression(token, operator, right);
+  }
+
+  private parseCallExpression(fn: Expression): CallExpression | null {
+    const token = this._currentToken;
+    const args = this.parseCallArguments();
+
+    if (args === null) {
+      return null;
+    }
+
+    return new CallExpression(token, fn, args);
+  }
+
+  private parseCallArguments(): Expression[] | null {
+    const args: Expression[] = [];
+
+    if (this.peekTokenIs(tokenType.RPAREN)) {
+      this.nextToken();
+
+      return args;
+    }
+
+    this.nextToken();
+
+    const arg = this.parseExpression(PRECEDENCE.LOWEST);
+
+    if (arg !== null) {
+      args.push(arg);
+    }
+
+    while (this.peekTokenIs(tokenType.COMMA)) {
+      this.nextToken();
+      this.nextToken();
+
+      const arg = this.parseExpression(PRECEDENCE.LOWEST);
+
+      if (arg !== null) {
+        args.push(arg);
+      }
+    }
+
+    if (!this.expectPeek(tokenType.RPAREN)) {
+      return null;
+    }
+
+    return args;
   }
 
   private parseBlockStatement(): BlockStatement {
@@ -344,11 +392,13 @@ export class Parser {
 
     this.nextToken();
 
-    while (!this.currentTokenIs(tokenType.SEMICOLON)) {
+    const returnValue = this.parseExpression(PRECEDENCE.LOWEST);
+
+    if (this.peekTokenIs(tokenType.SEMICOLON)) {
       this.nextToken();
     }
 
-    return new ReturnStatement(token, null);
+    return new ReturnStatement(token, returnValue);
   }
 
   private parseLetStatement(): LetStatement | null {
@@ -364,11 +414,15 @@ export class Parser {
       return null;
     }
 
-    while (!this.currentTokenIs(tokenType.SEMICOLON)) {
+    this.nextToken();
+
+    const value = this.parseExpression(PRECEDENCE.LOWEST);
+
+    if (this.peekTokenIs(tokenType.SEMICOLON)) {
       this.nextToken();
     }
 
-    return new LetStatement(token, name, null);
+    return new LetStatement(token, name, value);
   }
 
   private peekPrecedence(): Precedence {

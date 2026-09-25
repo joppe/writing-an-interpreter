@@ -1,5 +1,6 @@
 export { BlockStatement } from "./BlockStatement.ts";
 export { Bool } from "./Bool.ts";
+export { CallExpression } from "./CallExpression.ts";
 export { type Expression } from "./Expression.ts";
 export { ExpressionStatement } from "./ExpressionStatement.ts";
 export { FunctionLiteral } from "./FunctionLiteral.ts";
