@@ -6,17 +6,17 @@ import { Statement } from "./Statement.ts";
 export class LetStatement implements Statement {
   private readonly _token: Token;
   private readonly _name: Identifier;
-  private readonly _value: Expression | null;
+  private readonly _value: Expression;
 
   get name(): Identifier {
     return this._name;
   }
 
-  get value(): Expression | null {
+  get value(): Expression {
     return this._value;
   }
 
-  public constructor(token: Token, name: Identifier, value: Expression | null) {
+  public constructor(token: Token, name: Identifier, value: Expression) {
     this._token = token;
     this._name = name;
     this._value = value;

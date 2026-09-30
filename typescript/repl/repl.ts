@@ -1,6 +1,7 @@
 import { EOF } from "../char/index.ts";
 import { evaluator } from "../eval/index.ts";
 import { Lexer } from "../lexer/index.ts";
+import { Environment } from "../object/index.ts";
 import { Parser } from "../parser/index.ts";
 
 const PROMPT = ">> ";
@@ -23,6 +24,7 @@ async function prompt(prefix: string): Promise<string> {
 
 export async function repl(): Promise<void> {
   const encoder = new TextEncoder();
+  const env = new Environment();
 
   while (true) {
     const line = await prompt(PROMPT);
@@ -41,7 +43,7 @@ export async function repl(): Promise<void> {
       }
     }
 
-    const result = evaluator(program);
+    const result = evaluator(program, env);
 
     await Deno.stdout.write(encoder.encode(`${result.inspect()}\n`));
   }

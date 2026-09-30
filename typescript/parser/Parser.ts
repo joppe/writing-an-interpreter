@@ -426,6 +426,10 @@ export class Parser {
 
     const value = this.parseExpression(PRECEDENCE.LOWEST);
 
+    if (value === null) {
+      return null;
+    }
+
     if (this.peekTokenIs(tokenType.SEMICOLON)) {
       this.nextToken();
     }

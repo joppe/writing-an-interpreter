@@ -1,10 +1,32 @@
 import { assertEquals, assertInstanceOf } from "@std/assert";
 import { Lexer } from "../lexer/index.ts";
 import { Parser } from "../parser/index.ts";
-import { Bool, Err, Int, Null, objType } from "../object/index.ts";
+import { Bool, Environment, Err, Int, Null, objType } from "../object/index.ts";
 import { evaluator } from "./index.ts";
 
 Deno.test("evaluator", async (t) => {
+  await t.step("Let Statements", () => {
+    const tests = [
+      ["let a = 5; a;", 5],
+      ["let a = 5 * 5; a;", 25],
+      ["let a = 5; let b = a; b;", 5],
+      ["let a = 5; let b = a; let c = a + b + 5; c;", 15],
+    ] as const;
+
+    for (const test of tests) {
+      const lexer = new Lexer(test[0]);
+      const parser = new Parser(lexer);
+      const program = parser.parseProgram();
+
+      const env = new Environment();
+      const result = evaluator(program, env);
+
+      assertInstanceOf(result, Int);
+      assertEquals(result.type(), objType.INTEGER);
+      assertEquals(result.value, test[1]);
+    }
+  });
+
   await t.step("Error Handling", () => {
     const tests = [
       [
@@ -38,6 +60,7 @@ Deno.test("evaluator", async (t) => {
 }`,
         "unknown operator: BOOLEAN + BOOLEAN",
       ],
+      ["foobar", "identifier not found: foobar"],
     ] as const;
 
     for (const test of tests) {
@@ -45,7 +68,8 @@ Deno.test("evaluator", async (t) => {
       const parser = new Parser(lexer);
       const program = parser.parseProgram();
 
-      const result = evaluator(program);
+      const env = new Environment();
+      const result = evaluator(program, env);
 
       assertInstanceOf(result, Err);
       assertEquals(result.type(), objType.ERROR);
@@ -75,7 +99,8 @@ return 1;
       const parser = new Parser(lexer);
       const program = parser.parseProgram();
 
-      const result = evaluator(program);
+      const env = new Environment();
+      const result = evaluator(program, env);
 
       assertInstanceOf(result, Int);
       assertEquals(result.type(), objType.INTEGER);
@@ -99,7 +124,8 @@ return 1;
       const parser = new Parser(lexer);
       const program = parser.parseProgram();
 
-      const result = evaluator(program);
+      const env = new Environment();
+      const result = evaluator(program, env);
 
       if (test[1] === null) {
         assertInstanceOf(result, Null);
@@ -127,7 +153,8 @@ return 1;
       const parser = new Parser(lexer);
       const program = parser.parseProgram();
 
-      const result = evaluator(program);
+      const env = new Environment();
+      const result = evaluator(program, env);
 
       assertInstanceOf(result, Bool);
       assertEquals(result.type(), objType.BOOLEAN);
@@ -163,7 +190,8 @@ return 1;
       const parser = new Parser(lexer);
       const program = parser.parseProgram();
 
-      const result = evaluator(program);
+      const env = new Environment();
+      const result = evaluator(program, env);
 
       assertInstanceOf(result, Bool);
       assertEquals(result.type(), objType.BOOLEAN);
@@ -195,7 +223,8 @@ return 1;
       const parser = new Parser(lexer);
       const program = parser.parseProgram();
 
-      const result = evaluator(program);
+      const env = new Environment();
+      const result = evaluator(program, env);
 
       assertInstanceOf(result, Int);
       assertEquals(result.type(), objType.INTEGER);

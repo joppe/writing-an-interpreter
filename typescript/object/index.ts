@@ -1,4 +1,5 @@
 export { Bool } from "./Bool.ts";
+export { Environment } from "./Environment.ts";
 export { Err } from "./Err.ts";
 export { Int } from "./Int.ts";
 export { Null } from "./Null.ts";

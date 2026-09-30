@@ -2,9 +2,11 @@ import {
   BlockStatement,
   Bool as BoolNode,
   ExpressionStatement,
+  Identifier,
   IfExpression,
   InfixExpression,
   IntegerLiteral,
+  LetStatement,
   Node,
   PrefixExpression,
   Program,
@@ -13,6 +15,7 @@ import {
 } from "../ast/index.ts";
 import {
   Bool,
+  Environment,
   Err,
   Int,
   Null,
@@ -25,17 +28,17 @@ const NULL = new Null();
 const TRUE = new Bool(true);
 const FALSE = new Bool(false);
 
-export function evaluator(node: Node): Obj {
+export function evaluator(node: Node, env: Environment): Obj {
   if (node instanceof Program) {
-    return evalProgram(node.statements);
+    return evalProgram(node.statements, env);
   }
 
   if (node instanceof BlockStatement) {
-    return evalBlockStatement(node);
+    return evalBlockStatement(node, env);
   }
 
   if (node instanceof ReturnStatement) {
-    const value = evaluator(node.returnValue);
+    const value = evaluator(node.returnValue, env);
 
     if (isError(value)) {
       return value;
@@ -44,16 +47,30 @@ export function evaluator(node: Node): Obj {
     return new ReturnValue(value);
   }
 
+  if (node instanceof LetStatement) {
+    const value = evaluator(node.value, env);
+
+    if (isError(value)) {
+      return value;
+    }
+
+    return env.set(node.name.value, value);
+  }
+
+  if (node instanceof Identifier) {
+    return evalIdentifier(node, env);
+  }
+
   if (node instanceof IfExpression) {
-    return evalIfExpression(node);
+    return evalIfExpression(node, env);
   }
 
   if (node instanceof ExpressionStatement) {
-    return evaluator(node.expression);
+    return evaluator(node.expression, env);
   }
 
   if (node instanceof PrefixExpression) {
-    const right = evaluator(node.right);
+    const right = evaluator(node.right, env);
 
     if (isError(right)) {
       return right;
@@ -63,13 +80,13 @@ export function evaluator(node: Node): Obj {
   }
 
   if (node instanceof InfixExpression) {
-    const left = evaluator(node.left);
+    const left = evaluator(node.left, env);
 
     if (isError(left)) {
       return left;
     }
 
-    const right = evaluator(node.right);
+    const right = evaluator(node.right, env);
 
     if (isError(right)) {
       return right;
@@ -89,23 +106,37 @@ export function evaluator(node: Node): Obj {
   return NULL;
 }
 
-function evalIfExpression(node: IfExpression): Obj {
-  const condition = evaluator(node.condition);
+function evalIdentifier(node: Identifier, env: Environment): Obj {
+  const value = env.get(node.value);
+
+  if (value === false) {
+    return new Err(`identifier not found: ${node.value}`);
+  }
+
+  return value;
+}
+
+function evalIfExpression(node: IfExpression, env: Environment): Obj {
+  const condition = evaluator(node.condition, env);
 
   if (isError(condition)) {
     return condition;
   }
 
   if (isTruthy(condition)) {
-    return evaluator(node.consequence);
+    return evaluator(node.consequence, env);
   } else if (node.alternative !== null) {
-    return evaluator(node.alternative);
+    return evaluator(node.alternative, env);
   }
 
   return NULL;
 }
 
-function evalInfixExpression(operator: string, left: Obj, right: Obj): Obj {
+function evalInfixExpression(
+  operator: string,
+  left: Obj,
+  right: Obj,
+): Obj {
   if (left.type() === objType.INTEGER && right.type() === objType.INTEGER) {
     return evalIntegerInfixExpression(operator, left as Int, right as Int);
   }
@@ -158,7 +189,10 @@ function evalIntegerInfixExpression(
   }
 }
 
-function evalPrefixExpression(operator: string, right: Obj): Obj {
+function evalPrefixExpression(
+  operator: string,
+  right: Obj,
+): Obj {
   switch (operator) {
     case "!":
       return evalBangOperatorExpression(right);
@@ -190,11 +224,11 @@ function evalBangOperatorExpression(right: Obj): Obj {
   }
 }
 
-function evalBlockStatement(block: BlockStatement): Obj {
+function evalBlockStatement(block: BlockStatement, env: Environment): Obj {
   let result: Obj = NULL;
 
   for (const statement of block.statements) {
-    result = evaluator(statement);
+    result = evaluator(statement, env);
 
     if (
       result.type() === objType.RETURN_VALUE || result.type() === objType.ERROR
@@ -206,11 +240,11 @@ function evalBlockStatement(block: BlockStatement): Obj {
   return result;
 }
 
-function evalProgram(statements: Statement[]): Obj {
+function evalProgram(statements: Statement[], env: Environment): Obj {
   let result: Obj = new Null();
 
   for (const statement of statements) {
-    result = evaluator(statement);
+    result = evaluator(statement, env);
 
     if (result instanceof ReturnValue) {
       return result.value;
