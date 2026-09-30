@@ -4,13 +4,13 @@ import { Statement } from "./Statement.ts";
 
 export class ExpressionStatement implements Statement {
   private readonly _token: Token;
-  private readonly _expression: Expression | null;
+  private readonly _expression: Expression;
 
-  get expression(): Expression | null {
+  get expression(): Expression {
     return this._expression;
   }
 
-  public constructor(token: Token, expression: Expression | null) {
+  public constructor(token: Token, expression: Expression) {
     this._token = token;
     this._expression = expression;
   }

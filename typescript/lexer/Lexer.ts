@@ -5,8 +5,7 @@ import {
   isWhitespace,
   NEW_LINE,
 } from "../char/index.ts";
-import { Token, tokenType } from "../token/index.ts";
-import { lookupIdent } from "../token/tokenType.ts";
+import { lookupIdent, Token, tokenType } from "../token/index.ts";
 import { Position } from "./Position.ts";
 
 export class Lexer {

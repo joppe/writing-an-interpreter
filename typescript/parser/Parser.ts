@@ -332,9 +332,13 @@ export class Parser {
     );
   }
 
-  private parseExpressionStatement(): ExpressionStatement {
+  private parseExpressionStatement(): ExpressionStatement | null {
     const token = this._currentToken;
     const expression = this.parseExpression(PRECEDENCE.LOWEST);
+
+    if (expression === null) {
+      return null;
+    }
 
     // semicolon is optional
     if (this.peekTokenIs(tokenType.SEMICOLON)) {
@@ -387,12 +391,16 @@ export class Parser {
     return left;
   }
 
-  private parseReturnStatement(): ReturnStatement {
+  private parseReturnStatement(): ReturnStatement | null {
     const token = this._currentToken;
 
     this.nextToken();
 
     const returnValue = this.parseExpression(PRECEDENCE.LOWEST);
+
+    if (returnValue === null) {
+      return null;
+    }
 
     if (this.peekTokenIs(tokenType.SEMICOLON)) {
       this.nextToken();
