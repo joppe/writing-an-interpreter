@@ -13,6 +13,7 @@ import {
 } from "../ast/index.ts";
 import {
   Bool,
+  Err,
   Int,
   Null,
   type Obj,
@@ -36,6 +37,10 @@ export function evaluator(node: Node): Obj {
   if (node instanceof ReturnStatement) {
     const value = evaluator(node.returnValue);
 
+    if (isError(value)) {
+      return value;
+    }
+
     return new ReturnValue(value);
   }
 
@@ -50,12 +55,25 @@ export function evaluator(node: Node): Obj {
   if (node instanceof PrefixExpression) {
     const right = evaluator(node.right);
 
+    if (isError(right)) {
+      return right;
+    }
+
     return evalPrefixExpression(node.operator, right);
   }
 
   if (node instanceof InfixExpression) {
     const left = evaluator(node.left);
+
+    if (isError(left)) {
+      return left;
+    }
+
     const right = evaluator(node.right);
+
+    if (isError(right)) {
+      return right;
+    }
 
     return evalInfixExpression(node.operator, left, right);
   }
@@ -73,6 +91,10 @@ export function evaluator(node: Node): Obj {
 
 function evalIfExpression(node: IfExpression): Obj {
   const condition = evaluator(node.condition);
+
+  if (isError(condition)) {
+    return condition;
+  }
 
   if (isTruthy(condition)) {
     return evaluator(node.consequence);
@@ -96,7 +118,15 @@ function evalInfixExpression(operator: string, left: Obj, right: Obj): Obj {
     return left !== right ? TRUE : FALSE;
   }
 
-  return NULL;
+  if (left.type() !== right.type()) {
+    return new Err(
+      `type mismatch: ${left.type()} ${operator} ${right.type()}`,
+    );
+  }
+
+  return new Err(
+    `unknown operator: ${left.type()} ${operator} ${right.type()}`,
+  );
 }
 
 function evalIntegerInfixExpression(
@@ -122,7 +152,9 @@ function evalIntegerInfixExpression(
     case "!=":
       return left.value !== right.value ? TRUE : FALSE;
     default:
-      return NULL;
+      return new Err(
+        `unknown operator: ${left.type()} ${operator} ${right.type()}`,
+      );
   }
 }
 
@@ -133,13 +165,13 @@ function evalPrefixExpression(operator: string, right: Obj): Obj {
     case "-":
       return evalMinuPrefixOperatorExpression(right);
     default:
-      return NULL;
+      return new Err(`unknown operator: ${operator}${right.type()}`);
   }
 }
 
 function evalMinuPrefixOperatorExpression(right: Obj): Obj {
   if (right.type() !== objType.INTEGER) {
-    return NULL;
+    return new Err(`unknown operator: -${right.type()}`);
   }
 
   const value = (right as Int).value;
@@ -164,7 +196,9 @@ function evalBlockStatement(block: BlockStatement): Obj {
   for (const statement of block.statements) {
     result = evaluator(statement);
 
-    if (result.type() === objType.RETURN_VALUE) {
+    if (
+      result.type() === objType.RETURN_VALUE || result.type() === objType.ERROR
+    ) {
       return result;
     }
   }
@@ -180,6 +214,10 @@ function evalProgram(statements: Statement[]): Obj {
 
     if (result instanceof ReturnValue) {
       return result.value;
+    }
+
+    if (result instanceof Err) {
+      return result;
     }
   }
 
@@ -197,4 +235,8 @@ function isTruthy(condition: Obj): boolean {
     default:
       return true;
   }
+}
+
+function isError(obj: Obj): boolean {
+  return obj.type() === objType.ERROR;
 }

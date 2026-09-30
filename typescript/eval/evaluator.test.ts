@@ -1,10 +1,58 @@
 import { assertEquals, assertInstanceOf } from "@std/assert";
 import { Lexer } from "../lexer/index.ts";
 import { Parser } from "../parser/index.ts";
-import { Bool, Int, Null, objType } from "../object/index.ts";
+import { Bool, Err, Int, Null, objType } from "../object/index.ts";
 import { evaluator } from "./index.ts";
 
 Deno.test("evaluator", async (t) => {
+  await t.step("Error Handling", () => {
+    const tests = [
+      [
+        "5 + true;",
+        "type mismatch: INTEGER + BOOLEAN",
+      ],
+      [
+        "5 + true; 5;",
+        "type mismatch: INTEGER + BOOLEAN",
+      ],
+      [
+        "-true",
+        "unknown operator: -BOOLEAN",
+      ],
+      [
+        "true + false;",
+        "unknown operator: BOOLEAN + BOOLEAN",
+      ],
+      [
+        "5; true + false; 5",
+        "unknown operator: BOOLEAN + BOOLEAN",
+      ],
+      [
+        "if (10 > 1) [ true + false; ]",
+        "unknown operator: BOOLEAN + BOOLEAN",
+      ],
+      [
+        `if (10 > 1) {
+  if (10 > 1) { return true + false; }
+  return 1;
+}`,
+        "unknown operator: BOOLEAN + BOOLEAN",
+      ],
+    ] as const;
+
+    for (const test of tests) {
+      const lexer = new Lexer(test[0]);
+      const parser = new Parser(lexer);
+      const program = parser.parseProgram();
+
+      const result = evaluator(program);
+
+      assertInstanceOf(result, Err);
+      assertEquals(result.type(), objType.ERROR);
+      assertEquals(result.message, test[1]);
+    }
+  });
+
   await t.step("Evaluate Return Statements", () => {
     const tests = [
       ["return 10;", 10],

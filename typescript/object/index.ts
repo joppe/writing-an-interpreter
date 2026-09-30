@@ -1,4 +1,5 @@
 export { Bool } from "./Bool.ts";
+export { Err } from "./Err.ts";
 export { Int } from "./Int.ts";
 export { Null } from "./Null.ts";
 export { type Obj } from "./Obj.ts";
