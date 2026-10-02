@@ -116,6 +116,12 @@ export class Lexer {
       case "}":
         token = new Token(tokenType.RBRACE, "}");
         break;
+      case "[":
+        token = new Token(tokenType.LBRACKET, "[");
+        break;
+      case "]":
+        token = new Token(tokenType.RBRACKET, "]");
+        break;
       case EOF:
         token = new Token(tokenType.EOF, "");
         break;

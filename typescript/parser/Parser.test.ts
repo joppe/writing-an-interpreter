@@ -3,6 +3,7 @@ import { assertEquals, assertExists, assertInstanceOf } from "@std/assert";
 import { Lexer } from "../lexer/index.ts";
 import { Parser } from "./Parser.ts";
 import {
+  ArrayLiteral,
   BlockStatement,
   Bool,
   CallExpression,
@@ -10,6 +11,7 @@ import {
   FunctionLiteral,
   Identifier,
   IfExpression,
+  IndexExpression,
   InfixExpression,
   IntegerLiteral,
   LetStatement,
@@ -19,6 +21,69 @@ import {
 } from "../ast/index.ts";
 
 Deno.test("Parser", async (t) => {
+  await t.step("Index Expression", () => {
+    const input = "myArray[1 + 1]";
+    const lexer = new Lexer(input);
+    const parser = new Parser(lexer);
+    const program = parser.parseProgram();
+
+    assertExists(program);
+    assertEquals(program.statements.length, 1, parser.errors.join("\n"));
+
+    const statement = program.statements[0];
+
+    assertInstanceOf(statement, ExpressionStatement);
+
+    const expression = statement.expression;
+
+    assertInstanceOf(expression, IndexExpression);
+    assertInstanceOf(expression.left, Identifier);
+    assertEquals(expression.left.value, "myArray");
+
+    assertInstanceOf(expression.index, InfixExpression);
+    assertInstanceOf(expression.index.left, IntegerLiteral);
+    assertEquals(expression.index.left.value, 1);
+    assertEquals(expression.index.operator, "+");
+    assertInstanceOf(expression.index.right, IntegerLiteral);
+    assertEquals(expression.index.right.value, 1);
+  });
+
+  await t.step("Array Literal", () => {
+    const input = "[1, 2 * 2, 3 + 3]";
+    const lexer = new Lexer(input);
+    const parser = new Parser(lexer);
+    const program = parser.parseProgram();
+
+    assertExists(program);
+    assertEquals(program.statements.length, 1, parser.errors.join("\n"));
+
+    const statement = program.statements[0];
+
+    assertInstanceOf(statement, ExpressionStatement);
+
+    const expression = statement.expression;
+
+    assertInstanceOf(expression, ArrayLiteral);
+    assertEquals(expression.elements.length, 3);
+
+    assertInstanceOf(expression.elements[0], IntegerLiteral);
+    assertEquals(expression.elements[0].value, 1);
+
+    assertInstanceOf(expression.elements[1], InfixExpression);
+    assertInstanceOf(expression.elements[1].left, IntegerLiteral);
+    assertEquals(expression.elements[1].left.value, 2);
+    assertEquals(expression.elements[1].operator, "*");
+    assertInstanceOf(expression.elements[1].right, IntegerLiteral);
+    assertEquals(expression.elements[1].right.value, 2);
+
+    assertInstanceOf(expression.elements[2], InfixExpression);
+    assertInstanceOf(expression.elements[2].left, IntegerLiteral);
+    assertEquals(expression.elements[2].left.value, 3);
+    assertEquals(expression.elements[2].operator, "+");
+    assertInstanceOf(expression.elements[2].right, IntegerLiteral);
+    assertEquals(expression.elements[2].right.value, 3);
+  });
+
   await t.step("String Literal Expression", () => {
     const input = '"hello world";';
     const lexer = new Lexer(input);
@@ -35,7 +100,6 @@ Deno.test("Parser", async (t) => {
     const expression = statement.expression;
 
     assertInstanceOf(expression, StringLiteral);
-
     assertEquals(expression.value, "hello world");
   });
 
@@ -302,6 +366,14 @@ Deno.test("Parser", async (t) => {
       [
         "add(a + b + c * d / f + g)",
         "add((((a + b) + ((c * d) / f)) + g))",
+      ],
+      [
+        "a * [1, 2, 3, 4][b * c] * d",
+        "((a * ([1, 2, 3, 4][(b * c)])) * d)",
+      ],
+      [
+        "add(a * b[2], b[1], 2 * [1, 2][1])",
+        "add((a * (b[2])), (b[1]), (2 * ([1, 2][1])))",
       ],
     ] as const;
 

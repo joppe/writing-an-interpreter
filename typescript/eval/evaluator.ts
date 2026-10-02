@@ -1,4 +1,5 @@
 import {
+  ArrayLiteral,
   BlockStatement,
   Bool as BoolNode,
   CallExpression,
@@ -7,6 +8,7 @@ import {
   FunctionLiteral,
   Identifier,
   IfExpression,
+  IndexExpression,
   InfixExpression,
   IntegerLiteral,
   LetStatement,
@@ -18,6 +20,7 @@ import {
   StringLiteral,
 } from "../ast/index.ts";
 import {
+  Arr,
   Builtin,
   Environment,
   Err,
@@ -46,6 +49,32 @@ export function evaluator(node: Node, env: Environment): Obj {
     const body = node.body;
 
     return new Func(parameters, body, env);
+  }
+
+  if (node instanceof ArrayLiteral) {
+    const elements = evalExpressions(node.elements, env);
+
+    if (elements.length === 1 && isError(elements[0])) {
+      return elements[0];
+    }
+
+    return new Arr(elements);
+  }
+
+  if (node instanceof IndexExpression) {
+    const left = evaluator(node.left, env);
+
+    if (isError(left)) {
+      return left;
+    }
+
+    const index = evaluator(node.index, env);
+
+    if (isError(index)) {
+      return index;
+    }
+
+    return evalIndexExpression(left, index);
   }
 
   if (node instanceof CallExpression) {
@@ -135,6 +164,25 @@ export function evaluator(node: Node, env: Environment): Obj {
   }
 
   return NULL;
+}
+
+function evalIndexExpression(left: Obj, index: Obj): Obj {
+  if (left.type() === objType.ARRAY && index.type() === objType.INTEGER) {
+    return evalArrayIndexExpression(left as Arr, index as Int);
+  }
+
+  return new Err(`index operator not supported: ${left.type()}`);
+}
+
+function evalArrayIndexExpression(arr: Arr, index: Int): Obj {
+  const idx = index.value;
+  const max = arr.elements.length;
+
+  if (idx < 0 || idx >= max) {
+    return NULL;
+  }
+
+  return arr.elements[idx];
 }
 
 function applyFunction(func: Obj, args: Obj[]): Obj {

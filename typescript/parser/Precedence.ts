@@ -8,6 +8,7 @@ export const PRECEDENCE = {
   PRODUCT: 4,
   PREFIX: 5,
   CALL: 6,
+  INDEX: 7,
 } as const;
 
 export type Precedence = (typeof PRECEDENCE)[keyof typeof PRECEDENCE];
@@ -22,4 +23,5 @@ export const precedences = new Map<TokenType, Precedence>([
   [tokenType.SLASH, PRECEDENCE.PRODUCT],
   [tokenType.ASTERISK, PRECEDENCE.PRODUCT],
   [tokenType.LPAREN, PRECEDENCE.CALL],
+  [tokenType.LBRACKET, PRECEDENCE.INDEX],
 ]);

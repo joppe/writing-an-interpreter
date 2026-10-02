@@ -20,6 +20,8 @@ export const tokenType = {
   RPAREN: ")",
   LBRACE: "{",
   RBRACE: "}",
+  LBRACKET: "[",
+  RBRACKET: "]",
   LT: "<",
   GT: ">",
   // Keywords

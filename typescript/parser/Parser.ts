@@ -1,4 +1,5 @@
 import {
+  ArrayLiteral,
   BlockStatement,
   Bool,
   CallExpression,
@@ -7,6 +8,7 @@ import {
   FunctionLiteral,
   Identifier,
   IfExpression,
+  IndexExpression,
   InfixExpression,
   IntegerLiteral,
   LetStatement,
@@ -59,6 +61,7 @@ export class Parser {
       this.parseFunctionLiteral.bind(this),
     );
     this.registerPrefix(tokenType.STRING, this.parseStringLiteral.bind(this));
+    this.registerPrefix(tokenType.LBRACKET, this.parseArrayLiteral.bind(this));
 
     this.registerInfix(tokenType.PLUS, this.parseInfixExpression.bind(this));
     this.registerInfix(tokenType.MINUS, this.parseInfixExpression.bind(this));
@@ -72,6 +75,10 @@ export class Parser {
     this.registerInfix(tokenType.LT, this.parseInfixExpression.bind(this));
     this.registerInfix(tokenType.GT, this.parseInfixExpression.bind(this));
     this.registerInfix(tokenType.LPAREN, this.parseCallExpression.bind(this));
+    this.registerInfix(
+      tokenType.LBRACKET,
+      this.parseIndexExpression.bind(this),
+    );
   }
 
   public parseProgram(): Program {
@@ -134,50 +141,33 @@ export class Parser {
     return new PrefixExpression(token, operator, right);
   }
 
+  private parseIndexExpression(left: Expression): Expression | null {
+    const token = this._currentToken;
+
+    this.nextToken();
+
+    const index = this.parseExpression(PRECEDENCE.LOWEST);
+
+    if (index === null) {
+      return null;
+    }
+
+    if (!this.expectPeek(tokenType.RBRACKET)) {
+      return null;
+    }
+
+    return new IndexExpression(token, left, index);
+  }
+
   private parseCallExpression(fn: Expression): CallExpression | null {
     const token = this._currentToken;
-    const args = this.parseCallArguments();
+    const args = this.parseExpressionList(tokenType.RPAREN);
 
     if (args === null) {
       return null;
     }
 
     return new CallExpression(token, fn, args);
-  }
-
-  private parseCallArguments(): Expression[] | null {
-    const args: Expression[] = [];
-
-    if (this.peekTokenIs(tokenType.RPAREN)) {
-      this.nextToken();
-
-      return args;
-    }
-
-    this.nextToken();
-
-    const arg = this.parseExpression(PRECEDENCE.LOWEST);
-
-    if (arg !== null) {
-      args.push(arg);
-    }
-
-    while (this.peekTokenIs(tokenType.COMMA)) {
-      this.nextToken();
-      this.nextToken();
-
-      const arg = this.parseExpression(PRECEDENCE.LOWEST);
-
-      if (arg !== null) {
-        args.push(arg);
-      }
-    }
-
-    if (!this.expectPeek(tokenType.RPAREN)) {
-      return null;
-    }
-
-    return args;
   }
 
   private parseBlockStatement(): BlockStatement {
@@ -200,6 +190,51 @@ export class Parser {
     }
 
     return new BlockStatement(token, statements);
+  }
+
+  private parseArrayLiteral(): ArrayLiteral | null {
+    const token = this._currentToken;
+    const elements = this.parseExpressionList(tokenType.RBRACKET);
+
+    if (elements === null) {
+      return null;
+    }
+
+    return new ArrayLiteral(token, elements);
+  }
+
+  private parseExpressionList(end: TokenType): Expression[] | null {
+    const list: Expression[] = [];
+
+    if (this.peekTokenIs(end)) {
+      this.nextToken();
+      return list;
+    }
+
+    this.nextToken();
+
+    const item = this.parseExpression(PRECEDENCE.LOWEST);
+
+    if (item !== null) {
+      list.push(item);
+    }
+
+    while (this.peekTokenIs(tokenType.COMMA)) {
+      this.nextToken();
+      this.nextToken();
+
+      const item = this.parseExpression(PRECEDENCE.LOWEST);
+
+      if (item !== null) {
+        list.push(item);
+      }
+    }
+
+    if (!this.expectPeek(end)) {
+      return null;
+    }
+
+    return list;
   }
 
   private parseStringLiteral(): StringLiteral {

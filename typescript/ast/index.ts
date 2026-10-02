@@ -1,3 +1,4 @@
+export { ArrayLiteral } from "./ArrayLiteral.ts";
 export { BlockStatement } from "./BlockStatement.ts";
 export { Bool } from "./Bool.ts";
 export { CallExpression } from "./CallExpression.ts";
@@ -6,6 +7,7 @@ export { ExpressionStatement } from "./ExpressionStatement.ts";
 export { FunctionLiteral } from "./FunctionLiteral.ts";
 export { Identifier } from "./Identifier.ts";
 export { IfExpression } from "./IfExpression.ts";
+export { IndexExpression } from "./IndexExpression.ts";
 export { InfixExpression } from "./InfixExpression.ts";
 export { IntegerLiteral } from "./IntegerLiteral.ts";
 export { LetStatement } from "./LetStatement.ts";

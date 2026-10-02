@@ -2,6 +2,7 @@ import { assertEquals, assertInstanceOf } from "@std/assert";
 import { Lexer } from "../lexer/index.ts";
 import { Parser } from "../parser/index.ts";
 import {
+  Arr,
   Bool,
   Environment,
   Err,
@@ -14,6 +15,90 @@ import {
 import { evaluator } from "./index.ts";
 
 Deno.test("evaluator", async (t) => {
+  await t.step("Array Index Expressions", () => {
+    const tests = [
+      [
+        "[1, 2, 3][0]",
+        1,
+      ],
+      [
+        "[1, 2, 3][1]",
+        2,
+      ],
+      [
+        "[1, 2, 3][2]",
+        3,
+      ],
+      [
+        "let i = 0; [1][i];",
+        1,
+      ],
+      [
+        "[1, 2, 3][1 + 1];",
+        3,
+      ],
+      [
+        "let myArray = [1, 2, 3]; myArray[2];",
+        3,
+      ],
+      [
+        "let myArray = [1, 2, 3]; myArray[0] + myArray[1] + myArray[2];",
+        6,
+      ],
+      [
+        "let myArray = [1, 2, 3]; let i = myArray[0]; myArray[i]",
+        2,
+      ],
+      [
+        "[1, 2, 3][3]",
+        null,
+      ],
+      [
+        "[1, 2, 3][-1]",
+        null,
+      ],
+    ] as const;
+
+    for (const test of tests) {
+      const lexer = new Lexer(test[0]);
+      const parser = new Parser(lexer);
+      const program = parser.parseProgram();
+
+      const env = new Environment();
+      const result = evaluator(program, env);
+
+      if (result.type() === objType.INTEGER) {
+        assertInstanceOf(result, Int, result.inspect());
+        assertEquals(result.type(), objType.INTEGER);
+        assertEquals(result.value, test[1] as number);
+      } else {
+        console.log(result);
+        //assertInstanceOf(result, Err, result.inspect());
+        //assertEquals(result.type(), objType.ERROR);
+        //assertEquals(result.message, test[1] as string);
+      }
+    }
+  });
+
+  await t.step("Array Literal", () => {
+    const input = "[1, 2 * 2, 3 + 3]";
+    const lexer = new Lexer(input);
+    const parser = new Parser(lexer);
+    const program = parser.parseProgram();
+
+    const env = new Environment();
+    const result = evaluator(program, env);
+
+    assertInstanceOf(result, Arr);
+    assertEquals(result.elements.length, 3);
+    assertInstanceOf(result.elements[0], Int);
+    assertEquals(result.elements[0].value, 1);
+    assertInstanceOf(result.elements[1], Int);
+    assertEquals(result.elements[1].value, 4);
+    assertInstanceOf(result.elements[2], Int);
+    assertEquals(result.elements[2].value, 6);
+  });
+
   await t.step("Builtin Functions", () => {
     const tests = [
       [`len("")`, 0],
@@ -154,7 +239,7 @@ Deno.test("evaluator", async (t) => {
         "unknown operator: BOOLEAN + BOOLEAN",
       ],
       [
-        "if (10 > 1) [ true + false; ]",
+        "if (10 > 1) { true + false; }",
         "unknown operator: BOOLEAN + BOOLEAN",
       ],
       [

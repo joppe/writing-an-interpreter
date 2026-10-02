@@ -27,6 +27,7 @@ if (5 < 10) {
 10 != 9;
 "foobar"
 "foo bar"
+[1, 2];
 `;
     const tests = [
       [tokenType.LET, "let"],
@@ -104,6 +105,12 @@ if (5 < 10) {
       [tokenType.SEMICOLON, ";"],
       [tokenType.STRING, "foobar"],
       [tokenType.STRING, "foo bar"],
+      [tokenType.LBRACKET, "["],
+      [tokenType.INT, "1"],
+      [tokenType.COMMA, ","],
+      [tokenType.INT, "2"],
+      [tokenType.RBRACKET, "]"],
+      [tokenType.SEMICOLON, ";"],
       [tokenType.EOF, ""],
     ];
     const lexer = new Lexer(input);

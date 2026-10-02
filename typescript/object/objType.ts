@@ -7,6 +7,7 @@ export const objType = {
   FUNCTION: "FUNCTION",
   STRING: "STRING",
   BUILTIN: "BUILTIN",
+  ARRAY: "ARRAY",
 } as const;
 
 export type ObjType = (typeof objType)[keyof typeof objType];
