@@ -1,10 +1,58 @@
 import { assertEquals, assertInstanceOf } from "@std/assert";
 import { Lexer } from "../lexer/index.ts";
 import { Parser } from "../parser/index.ts";
-import { Bool, Environment, Err, Int, Null, objType } from "../object/index.ts";
+import {
+  Bool,
+  Environment,
+  Err,
+  Func,
+  Int,
+  Null,
+  objType,
+} from "../object/index.ts";
 import { evaluator } from "./index.ts";
 
 Deno.test("evaluator", async (t) => {
+  await t.step("Function Application", () => {
+    const tests = [
+      ["let identity = fn(x) { x; }; identity(5);", 5],
+      ["let identity = fn(x) { return x; }; identity(5);", 5],
+      ["let double = fn(x) { x * 2; }; double(5);", 10],
+      ["let add = fn(x, y) { x + y; }; add(5, 5);", 10],
+      ["let add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));", 20],
+      ["fn(x) { x; }(5)", 5],
+    ] as const;
+
+    for (const test of tests) {
+      const lexer = new Lexer(test[0]);
+      const parser = new Parser(lexer);
+      const program = parser.parseProgram();
+
+      const env = new Environment();
+      const result = evaluator(program, env);
+
+      assertInstanceOf(result, Int, result.inspect());
+      assertEquals(result.type(), objType.INTEGER);
+      assertEquals(result.value, test[1]);
+    }
+  });
+
+  await t.step("Function Object", () => {
+    const input = "fn(x) { x + 2; };";
+    const lexer = new Lexer(input);
+    const parser = new Parser(lexer);
+    const program = parser.parseProgram();
+
+    const env = new Environment();
+    const result = evaluator(program, env);
+
+    assertInstanceOf(result, Func);
+    assertEquals(result.type(), objType.FUNCTION, result.inspect());
+    assertEquals(result.parameters.length, 1);
+    assertEquals(result.parameters[0].toString(), "x");
+    assertEquals(result.body.toString(), "(x + 2)");
+  });
+
   await t.step("Let Statements", () => {
     const tests = [
       ["let a = 5; a;", 5],

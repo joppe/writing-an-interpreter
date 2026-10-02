@@ -1,6 +1,7 @@
 export { Bool } from "./Bool.ts";
 export { Environment } from "./Environment.ts";
 export { Err } from "./Err.ts";
+export { Func } from "./Func.ts";
 export { Int } from "./Int.ts";
 export { Null } from "./Null.ts";
 export { type Obj } from "./Obj.ts";

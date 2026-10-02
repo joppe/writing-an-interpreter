@@ -1,7 +1,10 @@
 import {
   BlockStatement,
   Bool as BoolNode,
+  CallExpression,
+  Expression,
   ExpressionStatement,
+  FunctionLiteral,
   Identifier,
   IfExpression,
   InfixExpression,
@@ -17,6 +20,7 @@ import {
   Bool,
   Environment,
   Err,
+  Func,
   Int,
   Null,
   type Obj,
@@ -35,6 +39,29 @@ export function evaluator(node: Node, env: Environment): Obj {
 
   if (node instanceof BlockStatement) {
     return evalBlockStatement(node, env);
+  }
+
+  if (node instanceof FunctionLiteral) {
+    const parameters = node.parameters;
+    const body = node.body;
+
+    return new Func(parameters, body, env);
+  }
+
+  if (node instanceof CallExpression) {
+    const func = evaluator(node.fn, env);
+
+    if (isError(func)) {
+      return func;
+    }
+
+    const args = evalExpressions(node.args, env);
+
+    if (args.length === 1 && isError(args[0])) {
+      return args[0];
+    }
+
+    return applyFunction(func, args);
   }
 
   if (node instanceof ReturnStatement) {
@@ -104,6 +131,51 @@ export function evaluator(node: Node, env: Environment): Obj {
   }
 
   return NULL;
+}
+
+function applyFunction(func: Obj, args: Obj[]): Obj {
+  if (!(func instanceof Func)) {
+    return new Err(`not a function: ${func.type()}`);
+  }
+
+  const env = extendFunctionEnv(func, args);
+  const evaluated = evaluator(func.body, env);
+
+  return unwrapReturnValue(evaluated);
+}
+
+function extendFunctionEnv(fn: Func, args: Obj[]): Environment {
+  const env = fn.env.extend();
+
+  fn.parameters.forEach((parameter, index) => {
+    env.set(parameter.value, args[index]);
+  });
+
+  return env;
+}
+
+function unwrapReturnValue(obj: Obj): Obj {
+  if (obj instanceof ReturnValue) {
+    return obj.value;
+  }
+
+  return obj;
+}
+
+function evalExpressions(expressions: Expression[], env: Environment): Obj[] {
+  const result: Obj[] = [];
+
+  for (const expression of expressions) {
+    const evaluated = evaluator(expression, env);
+
+    if (isError(evaluated)) {
+      return [evaluated];
+    }
+
+    result.push(evaluated);
+  }
+
+  return result;
 }
 
 function evalIdentifier(node: Identifier, env: Environment): Obj {
