@@ -15,6 +15,7 @@ import {
   Program,
   ReturnStatement,
   Statement,
+  StringLiteral,
 } from "../ast/index.ts";
 import {
   Bool,
@@ -26,6 +27,7 @@ import {
   type Obj,
   objType,
   ReturnValue,
+  Str,
 } from "../object/index.ts";
 
 const NULL = new Null();
@@ -126,6 +128,10 @@ export function evaluator(node: Node, env: Environment): Obj {
     return new Int(node.value);
   }
 
+  if (node instanceof StringLiteral) {
+    return new Str(node.value);
+  }
+
   if (node instanceof BoolNode) {
     return node.value === true ? TRUE : FALSE;
   }
@@ -213,6 +219,10 @@ function evalInfixExpression(
     return evalIntegerInfixExpression(operator, left as Int, right as Int);
   }
 
+  if (left.type() === objType.STRING && right.type() === objType.STRING) {
+    return evalStringInfixExpression(operator, left as Str, right as Str);
+  }
+
   if (operator === "==") {
     return left === right ? TRUE : FALSE;
   }
@@ -230,6 +240,23 @@ function evalInfixExpression(
   return new Err(
     `unknown operator: ${left.type()} ${operator} ${right.type()}`,
   );
+}
+
+function evalStringInfixExpression(
+  operator: string,
+  left: Str,
+  right: Str,
+): Obj {
+  if (operator !== "+") {
+    return new Err(
+      `unknown operator: ${left.type()} ${operator} ${right.type()}`,
+    );
+  }
+
+  const leftValue = left.value;
+  const rightValue = right.value;
+
+  return new Str(`${leftValue}${rightValue}`);
 }
 
 function evalIntegerInfixExpression(

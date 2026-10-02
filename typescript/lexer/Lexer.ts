@@ -48,6 +48,12 @@ export class Lexer {
     this.skipWhitespace();
 
     switch (this._char) {
+      case '"':
+        // skip double quote
+        this.readChar();
+
+        token = new Token(tokenType.STRING, this.readString());
+        break;
       case "=":
         if (this.peekChar() === "=") {
           const char = this._char;
@@ -166,6 +172,16 @@ export class Lexer {
     ) {
       this.readChar();
     }
+  }
+
+  private readString(): string {
+    const position = this._position;
+
+    while (this._char !== '"' && this._char !== EOF) {
+      this.readChar();
+    }
+
+    return this._input.slice(position, this._position);
   }
 
   private readChar(): void {

@@ -4,7 +4,7 @@ import { tokenType } from "../token/index.ts";
 import { Lexer } from "./index.ts";
 
 Deno.test("Lexer", async (t) => {
-  await t.step("nextToken", () => {
+  await t.step("Next Token", () => {
     const input = `let five = 5;
 let ten = 10;
 
@@ -25,6 +25,8 @@ if (5 < 10) {
 
 10 == 10;
 10 != 9;
+"foobar"
+"foo bar"
 `;
     const tests = [
       [tokenType.LET, "let"],
@@ -100,6 +102,8 @@ if (5 < 10) {
       [tokenType.NOT_EQ, "!="],
       [tokenType.INT, "9"],
       [tokenType.SEMICOLON, ";"],
+      [tokenType.STRING, "foobar"],
+      [tokenType.STRING, "foo bar"],
       [tokenType.EOF, ""],
     ];
     const lexer = new Lexer(input);

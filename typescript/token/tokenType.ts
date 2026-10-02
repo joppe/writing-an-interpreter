@@ -30,6 +30,7 @@ export const tokenType = {
   IF: "IF",
   ELSE: "ELSE",
   RETURN: "RETURN",
+  STRING: "STRING",
 } as const;
 
 export type TokenType = (typeof tokenType)[keyof typeof tokenType];

@@ -14,3 +14,4 @@ export { PrefixExpression } from "./PrefixExpression.ts";
 export { Program } from "./Program.ts";
 export { ReturnStatement } from "./ReturnStatement.ts";
 export { type Statement } from "./Statement.ts";
+export { StringLiteral } from "./StringLiteral.ts";

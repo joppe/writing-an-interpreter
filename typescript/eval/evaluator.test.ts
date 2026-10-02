@@ -9,10 +9,37 @@ import {
   Int,
   Null,
   objType,
+  Str,
 } from "../object/index.ts";
 import { evaluator } from "./index.ts";
 
 Deno.test("evaluator", async (t) => {
+  await t.step("String Concatenation", () => {
+    const input = '"Hello" + " " + "World!"';
+    const lexer = new Lexer(input);
+    const parser = new Parser(lexer);
+    const program = parser.parseProgram();
+
+    const env = new Environment();
+    const result = evaluator(program, env);
+
+    assertInstanceOf(result, Str);
+    assertEquals(result.value, "Hello World!");
+  });
+
+  await t.step("String Literal", () => {
+    const input = '"Hello World!"';
+    const lexer = new Lexer(input);
+    const parser = new Parser(lexer);
+    const program = parser.parseProgram();
+
+    const env = new Environment();
+    const result = evaluator(program, env);
+
+    assertInstanceOf(result, Str);
+    assertEquals(result.value, "Hello World!");
+  });
+
   await t.step("Function Application", () => {
     const tests = [
       ["let identity = fn(x) { x; }; identity(5);", 5],
@@ -109,6 +136,10 @@ Deno.test("evaluator", async (t) => {
         "unknown operator: BOOLEAN + BOOLEAN",
       ],
       ["foobar", "identifier not found: foobar"],
+      [
+        '"Hello" - "World"',
+        "unknown operator: STRING - STRING",
+      ],
     ] as const;
 
     for (const test of tests) {

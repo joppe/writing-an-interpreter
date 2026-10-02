@@ -7,3 +7,4 @@ export { Null } from "./Null.ts";
 export { type Obj } from "./Obj.ts";
 export { type ObjType, objType } from "./objType.ts";
 export { ReturnValue } from "./ReturnValue.ts";
+export { Str } from "./Str.ts";

@@ -14,6 +14,7 @@ import {
   Program,
   ReturnStatement,
   Statement,
+  StringLiteral,
 } from "../ast/index.ts";
 import { Lexer } from "../lexer/index.ts";
 import { Token, TokenType, tokenType } from "../token/index.ts";
@@ -57,6 +58,7 @@ export class Parser {
       tokenType.FUNCTION,
       this.parseFunctionLiteral.bind(this),
     );
+    this.registerPrefix(tokenType.STRING, this.parseStringLiteral.bind(this));
 
     this.registerInfix(tokenType.PLUS, this.parseInfixExpression.bind(this));
     this.registerInfix(tokenType.MINUS, this.parseInfixExpression.bind(this));
@@ -198,6 +200,12 @@ export class Parser {
     }
 
     return new BlockStatement(token, statements);
+  }
+
+  private parseStringLiteral(): StringLiteral {
+    const token = this._currentToken;
+
+    return new StringLiteral(token, token.literal);
   }
 
   private parseFunctionLiteral(): FunctionLiteral | null {

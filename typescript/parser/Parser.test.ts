@@ -15,9 +15,30 @@ import {
   LetStatement,
   PrefixExpression,
   ReturnStatement,
+  StringLiteral,
 } from "../ast/index.ts";
 
 Deno.test("Parser", async (t) => {
+  await t.step("String Literal Expression", () => {
+    const input = '"hello world";';
+    const lexer = new Lexer(input);
+    const parser = new Parser(lexer);
+    const program = parser.parseProgram();
+
+    assertExists(program);
+    assertEquals(program.statements.length, 1, parser.errors.join("\n"));
+
+    const statement = program.statements[0];
+
+    assertInstanceOf(statement, ExpressionStatement);
+
+    const expression = statement.expression;
+
+    assertInstanceOf(expression, StringLiteral);
+
+    assertEquals(expression.value, "hello world");
+  });
+
   await t.step("Call Expression Parsing", () => {
     const input = "add(1, 2 * 3, 4 + 5);";
     const lexer = new Lexer(input);
