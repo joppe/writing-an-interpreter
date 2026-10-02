@@ -14,6 +14,35 @@ import {
 import { evaluator } from "./index.ts";
 
 Deno.test("evaluator", async (t) => {
+  await t.step("Builtin Functions", () => {
+    const tests = [
+      [`len("")`, 0],
+      [`len("four")`, 4],
+      [`len("hello world")`, 11],
+      [`len(1)`, "argument to 'len' not supported, got INTEGER"],
+      [`len("one", "two")`, "wrong number of arguments. got=2, want=1"],
+    ] as const;
+
+    for (const test of tests) {
+      const lexer = new Lexer(test[0]);
+      const parser = new Parser(lexer);
+      const program = parser.parseProgram();
+
+      const env = new Environment();
+      const result = evaluator(program, env);
+
+      if (result.type() === objType.INTEGER) {
+        assertInstanceOf(result, Int, result.inspect());
+        assertEquals(result.type(), objType.INTEGER);
+        assertEquals(result.value, test[1] as number);
+      } else {
+        assertInstanceOf(result, Err, result.inspect());
+        assertEquals(result.type(), objType.ERROR);
+        assertEquals(result.message, test[1] as string);
+      }
+    }
+  });
+
   await t.step("String Concatenation", () => {
     const input = '"Hello" + " " + "World!"';
     const lexer = new Lexer(input);

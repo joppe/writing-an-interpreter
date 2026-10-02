@@ -18,7 +18,7 @@ import {
   StringLiteral,
 } from "../ast/index.ts";
 import {
-  Bool,
+  Builtin,
   Environment,
   Err,
   Func,
@@ -29,10 +29,8 @@ import {
   ReturnValue,
   Str,
 } from "../object/index.ts";
-
-const NULL = new Null();
-const TRUE = new Bool(true);
-const FALSE = new Bool(false);
+import { builtins } from "./builtins.ts";
+import { FALSE, NULL, TRUE } from "./singletons.ts";
 
 export function evaluator(node: Node, env: Environment): Obj {
   if (node instanceof Program) {
@@ -140,14 +138,18 @@ export function evaluator(node: Node, env: Environment): Obj {
 }
 
 function applyFunction(func: Obj, args: Obj[]): Obj {
-  if (!(func instanceof Func)) {
-    return new Err(`not a function: ${func.type()}`);
+  if (func instanceof Func) {
+    const env = extendFunctionEnv(func, args);
+    const evaluated = evaluator(func.body, env);
+
+    return unwrapReturnValue(evaluated);
   }
 
-  const env = extendFunctionEnv(func, args);
-  const evaluated = evaluator(func.body, env);
+  if (func instanceof Builtin) {
+    return func.fn(...args);
+  }
 
-  return unwrapReturnValue(evaluated);
+  return new Err(`not a function: ${func.type()}`);
 }
 
 function extendFunctionEnv(fn: Func, args: Obj[]): Environment {
@@ -187,11 +189,17 @@ function evalExpressions(expressions: Expression[], env: Environment): Obj[] {
 function evalIdentifier(node: Identifier, env: Environment): Obj {
   const value = env.get(node.value);
 
-  if (value === false) {
-    return new Err(`identifier not found: ${node.value}`);
+  if (value !== false) {
+    return value;
   }
 
-  return value;
+  const builtin = builtins.get(node.value);
+
+  if (builtin !== undefined) {
+    return builtin;
+  }
+
+  return new Err(`identifier not found: ${node.value}`);
 }
 
 function evalIfExpression(node: IfExpression, env: Environment): Obj {

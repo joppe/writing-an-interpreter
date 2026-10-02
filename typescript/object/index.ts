@@ -1,4 +1,5 @@
 export { Bool } from "./Bool.ts";
+export { Builtin, type BuiltinFunction } from "./Builtin.ts";
 export { Environment } from "./Environment.ts";
 export { Err } from "./Err.ts";
 export { Func } from "./Func.ts";
