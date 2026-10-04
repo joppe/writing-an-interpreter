@@ -15,6 +15,7 @@ export const tokenType = {
   NOT_EQ: "!=",
   // Delimiters
   COMMA: ",",
+  COLON: ":",
   SEMICOLON: ";",
   LPAREN: "(",
   RPAREN: ")",

@@ -9,6 +9,7 @@ import {
   CallExpression,
   ExpressionStatement,
   FunctionLiteral,
+  HashLiteral,
   Identifier,
   IfExpression,
   IndexExpression,
@@ -21,6 +22,109 @@ import {
 } from "../ast/index.ts";
 
 Deno.test("Parser", async (t) => {
+  await t.step("Hash Literals With Expressions", () => {
+    const input = '{"one": 0 + 1, "two": 10 - 8, "three": 15 / 5}';
+    const lexer = new Lexer(input);
+    const parser = new Parser(lexer);
+    const program = parser.parseProgram();
+
+    assertExists(program);
+    assertEquals(program.statements.length, 1, parser.errors.join("\n"));
+
+    const statement = program.statements[0];
+
+    assertInstanceOf(statement, ExpressionStatement);
+
+    const expression = statement.expression;
+
+    assertInstanceOf(expression, HashLiteral);
+    assertEquals(expression.pairs.size, 3);
+
+    const expected = {
+      "one": [0, "+", 1],
+      "two": [10, "-", 8],
+      "three": [15, "/", 5],
+    } as const;
+
+    for (const [key, value] of expression.pairs.entries()) {
+      assertInstanceOf(key, StringLiteral);
+      assertInstanceOf(value, InfixExpression);
+      assertInstanceOf(
+        value.left,
+        IntegerLiteral,
+      );
+      assertEquals(
+        value.left.value,
+        expected[key.toString() as keyof typeof expected][0],
+      );
+      assertEquals(
+        value.operator,
+        expected[key.toString() as keyof typeof expected][1],
+      );
+      assertInstanceOf(
+        value.right,
+        IntegerLiteral,
+      );
+      assertEquals(
+        value.right.value,
+        expected[key.toString() as keyof typeof expected][2],
+      );
+    }
+  });
+
+  await t.step("Empty Hash Literal", () => {
+    const input = "{}";
+    const lexer = new Lexer(input);
+    const parser = new Parser(lexer);
+    const program = parser.parseProgram();
+
+    assertExists(program);
+    assertEquals(program.statements.length, 1, parser.errors.join("\n"));
+
+    const statement = program.statements[0];
+
+    assertInstanceOf(statement, ExpressionStatement);
+
+    const expression = statement.expression;
+
+    assertInstanceOf(expression, HashLiteral);
+    assertEquals(expression.pairs.size, 0);
+  });
+
+  await t.step("Hash Literals String Keys", () => {
+    const input = '{"one": 1, "two": 2, "three": 3}';
+    const lexer = new Lexer(input);
+    const parser = new Parser(lexer);
+    const program = parser.parseProgram();
+
+    assertExists(program);
+    assertEquals(program.statements.length, 1, parser.errors.join("\n"));
+
+    const statement = program.statements[0];
+
+    assertInstanceOf(statement, ExpressionStatement);
+
+    const expression = statement.expression;
+
+    assertInstanceOf(expression, HashLiteral);
+    assertEquals(expression.pairs.size, 3);
+
+    const expected = {
+      "one": 1,
+      "two": 2,
+      "three": 3,
+    } as const;
+
+    for (const [key, value] of expression.pairs.entries()) {
+      assertInstanceOf(key, StringLiteral);
+      assertInstanceOf(value, IntegerLiteral);
+      assertEquals(
+        value.value,
+        expected[key.toString() as keyof typeof expected],
+      );
+    }
+  });
+
   await t.step("Index Expression", () => {
     const input = "myArray[1 + 1]";
     const lexer = new Lexer(input);

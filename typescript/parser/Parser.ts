@@ -6,6 +6,7 @@ import {
   Expression,
   ExpressionStatement,
   FunctionLiteral,
+  HashLiteral,
   Identifier,
   IfExpression,
   IndexExpression,
@@ -62,6 +63,7 @@ export class Parser {
     );
     this.registerPrefix(tokenType.STRING, this.parseStringLiteral.bind(this));
     this.registerPrefix(tokenType.LBRACKET, this.parseArrayLiteral.bind(this));
+    this.registerPrefix(tokenType.LBRACE, this.parseHashLiteral.bind(this));
 
     this.registerInfix(tokenType.PLUS, this.parseInfixExpression.bind(this));
     this.registerInfix(tokenType.MINUS, this.parseInfixExpression.bind(this));
@@ -190,6 +192,44 @@ export class Parser {
     }
 
     return new BlockStatement(token, statements);
+  }
+
+  private parseHashLiteral(): HashLiteral | null {
+    const token = this._currentToken;
+    const pairs = new Map<Expression, Expression>();
+
+    while (!this.peekTokenIs(tokenType.RBRACE)) {
+      this.nextToken();
+
+      const key = this.parseExpression(PRECEDENCE.LOWEST);
+
+      if (key === null || !this.expectPeek(tokenType.COLON)) {
+        return null;
+      }
+
+      this.nextToken();
+
+      const value = this.parseExpression(PRECEDENCE.LOWEST);
+
+      if (value === null) {
+        return null;
+      }
+
+      pairs.set(key, value);
+
+      if (
+        !this.peekTokenIs(tokenType.RBRACE) &&
+        !this.expectPeek(tokenType.COMMA)
+      ) {
+        return null;
+      }
+    }
+
+    if (!this.expectPeek(tokenType.RBRACE)) {
+      return null;
+    }
+
+    return new HashLiteral(token, pairs);
   }
 
   private parseArrayLiteral(): ArrayLiteral | null {

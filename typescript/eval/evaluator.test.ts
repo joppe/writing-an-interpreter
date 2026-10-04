@@ -1,4 +1,4 @@
-import { assertEquals, assertInstanceOf } from "@std/assert";
+import { assertEquals, assertInstanceOf, assertNotEquals } from "@std/assert";
 import { Lexer } from "../lexer/index.ts";
 import { Parser } from "../parser/index.ts";
 import {
@@ -7,14 +7,105 @@ import {
   Environment,
   Err,
   Func,
+  Hash,
+  HashKey,
   Int,
   Null,
   objType,
   Str,
 } from "../object/index.ts";
 import { evaluator } from "./index.ts";
+import { FALSE, TRUE } from "./singletons.ts";
 
 Deno.test("evaluator", async (t) => {
+  await t.step("Array Index Expressions", () => {
+    const tests = [
+      [
+        `{"foo": 5}["foo"]`,
+        5,
+      ],
+      [
+        `{"foo": 5}["bar"]`,
+        null,
+      ],
+      [
+        `let key = "foo"; {"foo": 5}[key]`,
+        5,
+      ],
+      [
+        `{}["foo"]`,
+        null,
+      ],
+      [
+        `{5: 5}[5]`,
+        5,
+      ],
+      [
+        `{true: 5}[true]`,
+        5,
+      ],
+      [
+        `{false: 5}[false]`,
+        5,
+      ],
+    ] as const;
+
+    for (const test of tests) {
+      const lexer = new Lexer(test[0]);
+      const parser = new Parser(lexer);
+      const program = parser.parseProgram();
+
+      const env = new Environment();
+      const result = evaluator(program, env);
+
+      if (test[1] === null) {
+        assertEquals(result.type(), "NULL");
+      } else {
+        assertInstanceOf(result, Int, result.inspect());
+        assertEquals(result.type(), objType.INTEGER);
+        assertEquals(result.value, test[1] as number);
+      }
+    }
+  });
+
+  await t.step("String Concatenation", () => {
+    const input = `let two = "two";
+    {
+      "one": 10 - 9,
+      two: 1 + 1,
+      "thr" + "ee": 6 / 2,
+      4: 4,
+      true: 5,
+      false: 6
+    }`;
+    const lexer = new Lexer(input);
+    const parser = new Parser(lexer);
+    const program = parser.parseProgram();
+
+    const env = new Environment();
+    const result = evaluator(program, env);
+
+    assertInstanceOf(result, Hash);
+
+    const expected = new Map<HashKey, number>();
+    expected.set((new Str("one")).hashKey(), 1);
+    expected.set((new Str("two")).hashKey(), 2);
+    expected.set((new Str("three")).hashKey(), 3);
+    expected.set((new Int(4)).hashKey(), 4);
+    expected.set(TRUE.hashKey(), 5);
+    expected.set(FALSE.hashKey(), 6);
+
+    assertEquals(result.pairs.size, expected.size);
+
+    for (const [key, value] of expected.entries()) {
+      const pair = result.pairs.get(key);
+
+      assertNotEquals(pair, undefined);
+      assertInstanceOf(pair?.value, Int);
+      assertEquals(pair.value.value, value);
+    }
+  });
+
   await t.step("Array Index Expressions", () => {
     const tests = [
       [
@@ -67,15 +158,12 @@ Deno.test("evaluator", async (t) => {
       const env = new Environment();
       const result = evaluator(program, env);
 
-      if (result.type() === objType.INTEGER) {
+      if (test[1] === null) {
+        assertEquals(result.type(), "NULL");
+      } else {
         assertInstanceOf(result, Int, result.inspect());
         assertEquals(result.type(), objType.INTEGER);
         assertEquals(result.value, test[1] as number);
-      } else {
-        console.log(result);
-        //assertInstanceOf(result, Err, result.inspect());
-        //assertEquals(result.type(), objType.ERROR);
-        //assertEquals(result.message, test[1] as string);
       }
     }
   });
@@ -253,6 +341,10 @@ Deno.test("evaluator", async (t) => {
       [
         '"Hello" - "World"',
         "unknown operator: STRING - STRING",
+      ],
+      [
+        `{"name": "Monkey"}[fn(x) { x }];`,
+        "unusable as hash key: FUNCTION",
       ],
     ] as const;
 

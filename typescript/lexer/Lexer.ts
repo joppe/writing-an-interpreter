@@ -101,6 +101,9 @@ export class Lexer {
       case ";":
         token = new Token(tokenType.SEMICOLON, ";");
         break;
+      case ":":
+        token = new Token(tokenType.COLON, ":");
+        break;
       case ",":
         token = new Token(tokenType.COMMA, ",");
         break;

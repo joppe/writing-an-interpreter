@@ -6,6 +6,7 @@ import {
   Expression,
   ExpressionStatement,
   FunctionLiteral,
+  HashLiteral,
   Identifier,
   IfExpression,
   IndexExpression,
@@ -19,12 +20,16 @@ import {
   Statement,
   StringLiteral,
 } from "../ast/index.ts";
+import { isHashable } from "../object/Hashable.ts";
 import {
   Arr,
   Builtin,
   Environment,
   Err,
   Func,
+  Hash,
+  HashKey,
+  HashPair,
   Int,
   Null,
   type Obj,
@@ -49,6 +54,10 @@ export function evaluator(node: Node, env: Environment): Obj {
     const body = node.body;
 
     return new Func(parameters, body, env);
+  }
+
+  if (node instanceof HashLiteral) {
+    return evalHashLiteral(node, env);
   }
 
   if (node instanceof ArrayLiteral) {
@@ -166,12 +175,61 @@ export function evaluator(node: Node, env: Environment): Obj {
   return NULL;
 }
 
+function evalHashLiteral(node: HashLiteral, env: Environment): Obj {
+  const pairs = new Map<HashKey, HashPair>();
+
+  for (const [keyNode, valueNode] of node.pairs.entries()) {
+    const key = evaluator(keyNode, env);
+
+    if (isError(key)) {
+      return key;
+    }
+
+    if (!isHashable(key)) {
+      return new Err(`unusable as hash key: ${key.type()}`);
+    }
+
+    const value = evaluator(valueNode, env);
+
+    if (isError(value)) {
+      return value;
+    }
+
+    const hashKey = key.hashKey();
+    pairs.set(hashKey, {
+      key,
+      value,
+    });
+  }
+
+  return new Hash(pairs);
+}
+
 function evalIndexExpression(left: Obj, index: Obj): Obj {
   if (left.type() === objType.ARRAY && index.type() === objType.INTEGER) {
     return evalArrayIndexExpression(left as Arr, index as Int);
   }
 
+  if (left.type() === objType.HASH) {
+    return evalHashIndexExpression(left as Hash, index);
+  }
+
   return new Err(`index operator not supported: ${left.type()}`);
+}
+
+function evalHashIndexExpression(hash: Hash, index: Obj): Obj {
+  if (!isHashable(index)) {
+    return new Err(`unusable as hash key: ${index.type()}`);
+  }
+
+  const key = index.hashKey();
+  const pair = hash.pairs.get(key);
+
+  if (pair === undefined) {
+    return NULL;
+  }
+
+  return pair.value;
 }
 
 function evalArrayIndexExpression(arr: Arr, index: Int): Obj {

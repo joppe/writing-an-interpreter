@@ -19,6 +19,8 @@ export class ArrayLiteral implements Expression {
   }
 
   public toString(): string {
-    return `[${this.elements.map((element) => element.toString()).join(", ")}]`;
+    return `[${
+      this._elements.map((element) => element.toString()).join(", ")
+    }]`;
   }
 }

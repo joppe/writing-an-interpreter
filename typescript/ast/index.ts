@@ -5,6 +5,7 @@ export { CallExpression } from "./CallExpression.ts";
 export { type Expression } from "./Expression.ts";
 export { ExpressionStatement } from "./ExpressionStatement.ts";
 export { FunctionLiteral } from "./FunctionLiteral.ts";
+export { HashLiteral } from "./HashLiteral.ts";
 export { Identifier } from "./Identifier.ts";
 export { IfExpression } from "./IfExpression.ts";
 export { IndexExpression } from "./IndexExpression.ts";

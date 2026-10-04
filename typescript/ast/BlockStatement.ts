@@ -19,12 +19,8 @@ export class BlockStatement implements Statement {
   }
 
   public toString(): string {
-    let out = "";
-
-    for (const statement of this._statements) {
-      out += statement.toString();
-    }
-
-    return out;
+    return `${
+      this._statements.map((statement) => statement.toString()).join("")
+    }`;
   }
 }
