@@ -108,4 +108,17 @@ builtins.set(
   }),
 );
 
+builtins.set(
+  "puts",
+  new Builtin((...args: Obj[]): Obj => {
+    const encoder = new TextEncoder();
+
+    for (const arg of args) {
+      Deno.stdout.writeSync(encoder.encode(`${arg.inspect()}\n`));
+    }
+
+    return NULL;
+  }),
+);
+
 export { builtins };
